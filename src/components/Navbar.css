@@ -1,0 +1,48 @@
+/* src/components/Navbar.css */
+.navbar-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #112D4E;
+}
+
+.navbar {
+  flex-grow: 1;
+}
+
+/* Profile menu aligned to the right */
+.profile-menu {
+  margin-left: auto;
+}
+
+/* Default style for all menu items */
+.navbar .ant-menu-item a,
+.navbar .ant-btn {
+  color: white;
+  font-size: 16px;
+}
+
+/* Default background color for all menu items */
+.navbar .ant-menu-item {
+  background-color: transparent !important; /* Keeps the default background consistent */
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Hover state */
+.navbar .ant-menu-item:hover,
+.navbar .ant-btn:hover {
+  background-color: #112D4E !important; /* Consistent light blue hover effect */
+  color: white;
+}
+
+/* Active page or current-page state */
+.navbar .ant-menu-item-active,
+.navbar .ant-menu-item.current-page {
+  background-color: #112D4E !important; /* Same color as hover */
+  color: white;
+}
+
+/* Prevent hover changes when active */
+.navbar .ant-menu-item.current-page:hover {
+  background-color: #112D4E !important;
+}

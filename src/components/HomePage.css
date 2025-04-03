@@ -1,0 +1,207 @@
+/* 🌟 Overall Styling */
+.student-home-container {
+  padding: 30px;
+  background: #002147;
+  font-family: 'Poppins', sans-serif;
+}
+
+/* 🎓 Hero Section */
+/* Hero Banner Container */
+.hero-banner {
+  background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
+  padding: 40px;
+  border-radius: 12px;
+  margin-bottom: 30px;
+  text-align: left;
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+  opacity: 0; /* Initially hidden */
+  transform: translateY(30px); /* Starts slightly below */
+  animation: fadeIn 1.2s ease forwards; /* Animation on page load */
+}
+
+/* Hover Effect */
+.hero-banner:hover {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+  transform: scale(1.03); /* Slightly enlarge on hover */
+}
+
+/* Hero Banner Title */
+.hero-title {
+  font-size: 28px;
+  font-weight: 600;
+  animation: slideIn 1.4s ease forwards; /* Add sliding effect for title */
+  opacity: 0; /* Initially hidden */
+}
+
+/* Hero Banner Subtitle */
+.hero-subtitle {
+  color: black;
+  margin-top: 8px;
+  animation: fadeInSubtitle 1.8s ease forwards; /* Delayed fade-in for subtitle */
+  opacity: 0; /* Initially hidden */
+}
+
+/* Hero Button */
+.hero-button {
+  margin-top: 20px;
+  animation: popUpButton 2s ease forwards; /* Button pops up last */
+  opacity: 0; /* Initially hidden */
+}
+
+/* Keyframes for Fade In Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Keyframes for Slide In Title */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Keyframes for Subtitle Fade In */
+@keyframes fadeInSubtitle {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Keyframes for Button Pop-up */
+@keyframes popUpButton {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+
+/* 📊 Quick Stats */
+.quick-stats-card {
+  margin: 30px 0;
+  background: #F1F6F9;
+  border-color: #002147;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+}
+
+.quick-stats-card .ant-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+
+/* 🧭 Quick Navigation */
+.quick-nav .ant-row {
+  width: 100%;
+}
+
+.nav-card {
+  text-align: center;
+  border-radius: 8px;
+  background:  #000000 ;
+  border-color: #002147;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  transition: transform 0.3s ease;
+}
+
+.nav-card:hover {
+  transform: scale(1.05);
+}
+
+.nav-card .nav-icon {
+  font-size: 30px;
+  margin-bottom: 10px;
+}
+
+.nav-card .ant-typography {
+  font-size: 16px;
+  margin-top: 8px;
+}
+
+.nav-card .ant-typography.secondary {
+  font-size: 12px;
+}
+
+
+/* 🔥 AI Recommendations */
+.ai-recommendations-card {
+  margin-top: 30px;
+  background-color:#F1F6F9;
+  border: 1px solid #91d5ff;
+  border-radius: 12px;
+  padding: 20px;
+  transition: transform 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease;
+}
+.ai-recommendations-card:hover {
+  transform: scale(1.05); /* Increase size by 5% on hover */
+  background-color: #DBE2EF; /* Change to a lighter shade */
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+.explore-insights-button {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  background-color: #00474f; 
+  transition: transform 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease;
+}
+.explore-insights-button:hover {
+  transform: scale(1.05); /* Increase size by 5% on hover */
+  background-color: #00474f; /* Change to a lighter shade */
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2); /* Add a shadow effect */
+}
+
+
+/* 📅 Deadlines */
+.deadlines-card {
+  margin-top: 30px;
+  background:  #F1F6F9;
+  padding: 20px;
+}
+
+/* 💬 Chatbot */
+.chatbot-button {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+}
+.welcome-header {
+  text-align: center;
+  padding: 2rem 1rem;
+  background: #F1F6F9;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.welcome-title {
+  color: #000000;
+}
+.welcome-header:hover {
+  transform: scale(1.05); /* Increase size by 5% on hover */
+  background-color: #F1F6F9; /* Change to a lighter shade */
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2); /* Add a shadow effect */
+}

@@ -1,0 +1,82 @@
+/* src/components/LoginPage.css */
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background:linear-gradient(135deg, #002147 0%, #001529 50%, #003366 100%) !important;
+  animation: fadeIn 1s ease-in-out;
+}
+
+.login-card {
+  max-width: 400px;
+  width: 100%;
+  padding: 30px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+  background: #F1F6F9 !important;
+  transition: transform 0.3s ease-in-out;
+}
+
+.login-card:hover {
+  transform: translateY(-5px);
+}
+
+.login-title {
+  text-align: center;
+  margin-bottom: 10px;
+  color: #00474f;
+  font-weight: 600;
+}
+
+.login-subtitle {
+  display: block;
+  text-align: center;
+  margin-bottom: 20px;
+  color: #7a7a7a;
+  font-size: 14px;
+}
+
+.login-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.forgot-password {
+  font-size: 12px;
+  color: #1890ff;
+  transition: color 0.3s ease;
+}
+
+.forgot-password:hover {
+  color: #00474f;
+}
+
+.loginn-button {
+  background-color: #144272;
+  color: #fff;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.loginn-button:hover {
+  background-color: #002f36;
+  transform: scale(1.05);
+}
+
+.ant-modal-title {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}

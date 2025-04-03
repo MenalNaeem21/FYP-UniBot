@@ -1,0 +1,64 @@
+.marks-container {
+    min-height: 100vh;
+    background: #002147;
+  }
+  
+  .marks-title {
+    text-align: center;
+    font-family: 'Inter', sans-serif;
+    color: white !important;
+  }
+  
+  .marks-subtitle {
+    text-align: center;
+    display:block;
+    color: white;
+    margin-bottom: 1.5rem;
+  }
+  
+  .marks-input,
+  .marks-records,
+  .marks-details {
+    margin: 1.5rem 0;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    padding: 1.5rem;
+  }
+  
+  .marks-controls .ant-select,
+  .marks-controls .ant-input {
+    width: 200px;
+  }
+  
+  .marks-controls .ant-btn {
+    margin-left: auto;
+  }
+  .markss-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+  
+  .markss-buttons button {
+    border-radius: 8px;
+    font-size: 0.9rem;
+    background-color: #144272;
+  }
+  .welcome-header {
+    text-align: center;
+    padding: 2rem 1rem;
+    background: #F1F6F9;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .welcome-title {
+    color: #000000;
+  }
+  .welcome-header:hover {
+    transform: scale(1.05); /* Increase size by 5% on hover */
+    background-color: #F1F6F9; /* Change to a lighter shade */
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2); /* Add a shadow effect */
+  }

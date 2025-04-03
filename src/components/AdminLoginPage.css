@@ -1,0 +1,33 @@
+/* src/components/LoginPage.css */
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background: linear-gradient(135deg, #00474f, #001529);
+  }
+  
+  .login-card {
+    max-width: 400px;
+    width: 100%;
+    padding: 30px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    background-color: #e6fffb;
+  }
+  
+  .login-title {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #001529;
+  }
+  .loggin-button {
+    position: center;
+    background-color: #144272; 
+    transition: transform 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease;
+  }
+  .loggin-button:hover {
+    transform: scale(1.05); /* Increase size by 5% on hover */
+    background-color: #00474f; /* Change to a lighter shade */
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2); /* Add a shadow effect */
+  }

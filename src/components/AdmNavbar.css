@@ -1,0 +1,28 @@
+/* src/components/Navbar.css */
+.navbar-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #112D4E;
+  }
+  
+  .navbar {
+    flex-grow: 1;
+  }
+  
+  .profile-menu {
+    margin-left: auto; /* Pushes the profile dropdown to the right */
+  }
+  
+  .navbar .ant-menu-item a,
+  .navbar .ant-btn {
+    color: white;
+    font-size: 16px;
+  }
+  
+  .navbar .ant-menu-item:hover,
+  .navbar .ant-menu-item-active,
+  .navbar .ant-btn:hover {
+    background-color: #DBE2EF; /* Light blue hover effect */
+  }
+  

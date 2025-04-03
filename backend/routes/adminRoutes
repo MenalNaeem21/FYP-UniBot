@@ -1,0 +1,108 @@
+const express = require("express");
+const Student = require("../models/Student");
+const Teacher = require("../models/Teacher");
+const jwt = require("jsonwebtoken");
+
+const router = express.Router();
+
+// ➤ Middleware to check if user is an admin
+const verifyAdmin = (req, res, next) => {
+  try {
+    const token = req.header("Authorization")?.split(" ")[1];
+    if (!token) return res.status(403).json({ message: "Access denied" });
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (decoded.role !== "admin") {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+    
+    req.user = decoded; // Attach user info to request
+    next();
+  } catch (error) {
+    res.status(401).json({ message: "Invalid token" });
+  }
+};
+
+// Create a new student (Admin Only)
+router.post("/students", verifyAdmin, async (req, res) => {
+  try {
+    const newStudent = new Student(req.body);
+    await newStudent.save();
+    res.status(201).json({ message: "Student created successfully", newStudent });
+  } catch (error) {
+    res.status(500).json({ message: "Error creating student", error });
+  }
+});
+
+//  Get all students (Admin Only)
+router.get("/students", verifyAdmin, async (req, res) => {
+  try {
+    const students = await Student.find();
+    res.json(students);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching students", error });
+  }
+});
+
+// Update a student (Admin Only)
+/*router.put("/students/:id", verifyAdmin, async (req, res) => {
+  try {
+    const updatedStudent = await Student.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    res.json({ message: "Student updated", updatedStudent });
+  } catch (error) {
+    res.status(500).json({ message: "Error updating student", error });
+  }
+});*/
+
+//  Delete a student (Admin Only)
+router.delete("/students/:id", verifyAdmin, async (req, res) => {
+  try {
+    await Student.findByIdAndDelete(req.params.id);
+    res.json({ message: "Student deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Error deleting student", error });
+  }
+});
+
+// for Teachers
+router.post("/teachers", verifyAdmin, async (req, res) => {
+  try {
+    const newTeacher = new Teacher(req.body);
+    await newTeacher.save();
+    res.status(201).json({ message: "Teacher created successfully", newTeacher });
+  } catch (error) {
+    res.status(500).json({ message: "Error creating teacher", error });
+  }
+});
+
+router.get("/teachers", verifyAdmin, async (req, res) => {
+    try {
+      const students = await Student.find();
+      res.json(students);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching students", error });
+    }
+  });
+  
+  // Update a student (Admin Only)
+  router.put("/teachers/:id", verifyAdmin, async (req, res) => {
+    try {
+      const updatedStudent = await Student.findByIdAndUpdate(req.params.id, req.body, { new: true });
+      res.json({ message: "Faculty member updated", updatedStudent });
+    } catch (error) {
+      res.status(500).json({ message: "Error updating faculty member", error });
+    }
+  });
+  
+  //  Delete a student (Admin Only)
+  router.delete("/teachers/:id", verifyAdmin, async (req, res) => {
+    try {
+      await Student.findByIdAndDelete(req.params.id);
+      res.json({ message: "Faculty member deleted successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Error deleting Faculty member", error });
+    }
+  });
+  
+
+module.exports = router;

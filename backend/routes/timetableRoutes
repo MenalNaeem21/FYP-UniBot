@@ -1,0 +1,21 @@
+const express = require('express');
+const router = express.Router();
+const Timetable = require('../models/timetable');
+
+// Get timetable based on course code or faculty
+router.get('/timetable', async (req, res) => {
+    try {
+        const { courseCode, faculty } = req.query;
+        let query = {};
+        
+        if (courseCode) query.courseCode = courseCode;
+        if (faculty) query.faculty = faculty;
+        
+        const results = await Timetable.find(query);
+        res.json(results);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+module.exports = router;

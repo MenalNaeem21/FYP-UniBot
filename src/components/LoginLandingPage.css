@@ -1,0 +1,61 @@
+/* src/components/LoginLandingPage.css */
+
+
+  .landing-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh; /* Full height to center content vertically */
+    background: url('https://www.pixel4k.com/wp-content/uploads/2018/10/minimalist-blue-mountains-4k_1540749705.jpg') no-repeat center center fixed;
+    background-size: cover; /* Ensure background covers the entire page */
+  }
+  
+  .welcome-title {
+    font-size: 48px; /* Adjust the size as needed */
+    font-weight: bold; /* Make it bold */
+    color: #ffffff; /* Change to your preferred color */
+    opacity: 0; /* Start as invisible */
+    transform: translateY(-30px); /* Move slightly up for effect */
+    animation: fadeInUp 1s forwards; /* Animation name, duration, and apply forwards */
+  }
+  
+  /* Define the animation */
+  @keyframes fadeInUp {
+    0% {
+      opacity: 0;
+      transform: translateY(-30px); /* Start from above */
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0); /* End at normal position */
+    }
+  }
+   
+  .logo-container {
+    margin-bottom: 20px;
+  }
+  
+  .logo {
+    max-width: 200px; /* Adjust the size of the logo */
+  }
+  
+
+  
+  .button-container {
+    display: flex;
+    gap: 20px; /* Space between buttons */
+  }
+  
+  .login-button {
+    width: 200px; /* Fixed width for buttons */
+    font-size: 18px;
+    border-radius: 5px; /* Rounded corners for buttons */
+    transition: transform 0.3s, box-shadow 0.3s; /* Smooth hover effects */
+  }
+  
+  .login-button:hover {
+    transform: translateY(-5px); /* Lift effect on hover */
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2); /* Shadow effect */
+  }
+  

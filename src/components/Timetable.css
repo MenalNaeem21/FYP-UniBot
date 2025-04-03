@@ -1,0 +1,27 @@
+/* src/components/TranscriptPage.css */
+.tt-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #00474f, #001529);
+    padding: 20px;
+  }
+  
+  
+  .chatbot-button {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background-color: #002329;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease;
+  }
+  .chatbot-button:hover {
+    transform: scale(1.05); /* Increase size by 5% on hover */
+    background-color: #85a5ff; /* Change to a lighter shade */
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2); /* Add a shadow effect */
+  }
+  
+  

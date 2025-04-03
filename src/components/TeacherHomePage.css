@@ -1,0 +1,104 @@
+/* Home Container */
+.teacher-home-container {
+  padding: 30px;
+  background-color: #002147;
+}
+
+/* Welcome Banner */
+.welcome-banner {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: #fff;
+  border-radius: 8px;
+  padding: 30px;
+  margin-bottom: 30px;
+}
+.welcome-title {
+  color: #fff;
+  margin: 0;
+}
+.welcome-icon {
+  font-size: 48px;
+  color: #fff;
+}
+
+/* Quick Navigation */
+.quick-nav .nav-card {
+  text-align: center;
+  padding: 20px;
+  border-radius: 8px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  background: #F1F6F9;
+}
+.nav-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+.nav-icon {
+  font-size: 36px;
+  margin-bottom: 10px;
+  color: #2563eb;
+}
+
+/* Analytics Card */
+.analytics-card {
+  margin-top: 30px;
+  background-color: #F1F6F9;
+  border-radius: 8px;
+  padding: 20px;
+}
+.analytics-card .ant-statistic {
+  text-align: center;
+}
+
+/* AI Recommendations */
+.ai-recommendations-card {
+  margin-top: 35px;
+  background-color: #ffc53d !important;
+  border: 1px solid #91d5ff;
+  border-radius: 8px;
+  padding: 20px;
+  transition: transform 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease;
+}
+/* HomePage.css */
+.explore-insights-button {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  background-color: #00474f; 
+  transition: transform 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease;
+}
+.explore-insights-button:hover {
+  transform: scale(1.05); /* Increase size by 5% on hover */
+  background-color: #00474f; /* Change to a lighter shade */
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2); /* Add a shadow effect */
+}
+
+.ai-recommendations-card:hover {
+  transform: scale(1.05); /* Increase size by 5% on hover */
+  background-color: #ffd666; /* Change to a lighter shade */
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2); /* Add a shadow effect */
+}
+.ai-list {
+  list-style: none;
+  padding: 0;
+  color: #000000;
+}
+
+.ai-list li {
+  margin: 10px 0;
+  font-size: 16px;
+}
+
+/* Chatbot Button */
+.chatbot-button {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  background-color: #2563eb;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+.chatbot-button:hover {
+  background-color: #3b82f6;
+  transform: scale(1.1);
+}

@@ -1,0 +1,82 @@
+.profile-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: #002147 !important;
+  padding: 20px;
+}
+
+.profile-card {
+  width: 80%;
+  background-color:#F1F6F9;
+  border-radius: 15px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+  padding: 20px;
+  color: #003a8c;
+  font-family: 'Roboto', sans-serif;
+}
+
+.profile-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.profile-avatar {
+  margin-bottom: 10px;
+}
+
+.profile-name {
+  color: #0050b3;
+  font-weight: bold;
+}
+
+.profile-degree, .profile-campus {
+  display: block;
+  color: #595959;
+}
+
+.profile-section {
+  margin-top: 20px;
+}
+
+.profile-section .ant-list-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 0;
+}
+
+.profile-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.profile-item .icon {
+  font-size: 18px;
+  color: #0050b3;
+}
+
+.category-title {
+  color: #0050b3;
+  margin-bottom: 10px;
+  text-align: center;
+  font-weight: 600;
+}
+
+.chatbot-button {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  background-color: #003a8c;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.chatbot-button:hover {
+  transform: scale(1.1);
+  background-color: #40a9ff;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.2);
+}

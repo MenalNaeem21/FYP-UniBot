@@ -1,0 +1,146 @@
+const express = require("express");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const Student = require("../models/Student");
+const Teacher = require("../models/Teacher");
+const Admin = require("../models/admin"); // Ensure correct import
+
+const router = express.Router();
+
+// User Registration (Students & Teachers)
+router.post("/register", async (req, res) => {
+  try {
+    const { name, email, password, role } = req.body;
+
+    if (!["student", "teacher", "admin"].includes(role)) {
+      return res.status(400).json({ message: "Invalid role specified" });
+    }
+
+    let existingUser =
+      role === "student"
+        ? await Student.findOne({ email })
+        : await Teacher.findOne({ email });
+
+    if (existingUser) {
+      return res.status(400).json({ message: "User already exists" });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    let newUser;
+    if (role === "student") {
+      newUser = new Student({ name, email, password: hashedPassword, role });
+    } else if (role === "teacher") {
+      newUser = new Teacher({ name, email, password: hashedPassword, role });
+    } else if (role === "admin") {
+      newUser = new Admin({ name, email, password: hashedPassword, role });
+    }
+
+    await newUser.save();
+    res.status(201).json({ message: `${role} registered successfully` });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error registering user", error });
+  }
+});
+
+
+// User Login (Students & Teachers)
+router.post("/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    let user = await Student.findOne({ email }) || 
+               await Teacher.findOne({ email }) || 
+               await Admin.findOne({ email });
+
+    if (!user) {
+      return res.status(400).json({ message: "User not found" });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
+
+    const jwtSecret = process.env.JWT_SECRET || "default_secret"; // ✅ Fix JWT secret issue
+    const token = jwt.sign({ id: user._id, role: user.role },  jwtSecret, { expiresIn: "1h" });
+
+    res.json({ message: "Login successful", token });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
+
+
+
+
+
+
+// Admin Registration (No Hashing)
+router.post("/register-admin", async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+
+    // Check if admin already exists
+    const existingAdmin = await Admin.findOne({ email });
+    if (existingAdmin) {
+      return res.status(400).json({ message: "Admin already exists" });
+    }
+
+    // ✅ Store password in plain text (Not recommended, but as requested)
+    const newAdmin = new Admin({ name, email, password, role: "admin" });
+    await newAdmin.save();
+
+    res.status(201).json({ message: "Admin registered successfully" });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error registering admin", error });
+  }
+});
+
+
+
+
+// Admin Login (No re-hashing of stored password)
+router.post("/login-admin", async (req, res) => {
+    try {
+      const { email, password } = req.body;
+  
+      // Find admin by email
+      const admin = await Admin.findOne({ email });
+      if (!admin) {
+        return res.status(400).json({ message: "Admin not found" });
+      }
+  
+      console.log("Stored Hashed Password:", admin.password);
+      console.log("Entered Password:", password);
+  
+      // Compare the entered password with stored hashed password
+      const isMatch = await bcrypt.compare(password, admin.password);
+      console.log("🔍 Password Match:", isMatch);
+  
+      if (!isMatch) {
+        return res.status(400).json({ message: "Invalid credentials" });
+      }
+  
+      // Generate JWT token
+      const jwtSecret = process.env.JWT_SECRET || "default_secret"; 
+      const token = jwt.sign({ id: admin._id, role: "admin" }, jwtSecret, { expiresIn: "1h" });
+  
+      console.log("✅ Token Generated:", token);
+      res.json({ message: "Admin login successful", token, role: "admin" });
+  
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Server error", error: error.message });
+    }
+  });
+  
+
+module.exports = router;
+
+
+
