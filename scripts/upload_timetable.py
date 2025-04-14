@@ -1,5 +1,6 @@
 from pymongo import MongoClient
 import pandas as pd
+from extract_timetable import clean_df
 
 # Connect to MongoDB (Replace with your actual connection string)
 client = MongoClient("mongodb://localhost:27017/")
@@ -9,7 +10,7 @@ timetable_collection = db["timetable"]  # Collection name
 # Load structured timetable DataFrame (Assuming df_structured_timetable is ready)
 timetable_data = []
 
-for _, row in df_structured_timetable.iterrows():
+for _, row in clean_df.iterrows():
     # Extract course name and section separately
     course_parts = row["course_info"].rsplit("(", 1)
     course_name = course_parts[0].strip()
