@@ -2,7 +2,7 @@ const express = require('express');
 const Teacher = require('../models/Teacher');
 const router = express.Router();
 const { faker } = require("@faker-js/faker");
-
+const jwt = require('jsonwebtoken');
 
 
 const generateTeachers = (count = 10) => {
@@ -92,6 +92,7 @@ router.delete('/:id', async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
+
 
 
 module.exports = router;

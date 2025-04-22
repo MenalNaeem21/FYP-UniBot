@@ -243,6 +243,55 @@ router.post("/login-teacher", async (req, res) => {
   }
 });
 
+// Inline Auth Middleware
+const authMiddleware = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.split(' ')[1];
+
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'default_secret');
+      req.user = decoded; // decoded = { id, role }
+      next();
+    } catch (error) {
+      return res.status(401).json({ message: 'Invalid token' });
+    }
+  } else {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+};
+
+// GET /api/teachers/profile — Protected Route
+router.get('/profile', authMiddleware, async (req, res) => {
+  try {
+    const teacher = await Teacher.findById(req.user.id).select('-password');
+
+    if (!teacher) {
+      return res.status(404).json({ message: 'Teacher not found' });
+    }
+
+    res.json(teacher);
+  } catch (error) {
+    console.error('Error fetching teacher profile:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+router.get('/studentprofile', authMiddleware, async (req, res) => {
+  try {
+    const student = await Student.findById(req.user.id).select('-password');
+
+    if (!student) {
+      return res.status(404).json({ message: 'Student not found' });
+    }
+
+    res.json(student);
+  } catch (error) {
+    console.error('Error fetching student profile:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
 module.exports = router;
 
