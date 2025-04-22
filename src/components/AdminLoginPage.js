@@ -23,7 +23,7 @@ const AdminLoginPage = ({ setAdminAuthenticated }) => {
         localStorage.setItem("adminToken", response.data.token); // Store token
         setAdminAuthenticated(true);
         message.success("Login successful!");
-        navigate("/AdmHomePage"); // Redirect to admin dashboard
+        navigate("/admhome"); // Redirect to admin dashboard
       } else {
         message.error("Invalid credentials");
       }

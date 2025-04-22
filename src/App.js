@@ -27,7 +27,7 @@ import Tattendance from './components/Tattendance';
 import Tmarks from './components/Tmarks';
 import Tprofile from './components/Tprofile';
 import Treport from './components/Treport';
-
+import Tgrader from './components/Tgrader';
 const App = () => {
   const [authenticated, setAuthenticated] = useState(false);
   const [adminAuthenticated, setAdminAuthenticated] = useState(false);
@@ -62,7 +62,7 @@ const App = () => {
       });
       console.log("✅ Botpress Webchat Initialized!");
     };
-
+  
     return () => {
       document.body.removeChild(script1);
       document.body.removeChild(script2);
@@ -72,29 +72,51 @@ const App = () => {
   return (
     <Router>
       {/* Render Navbar based on authentication type */}
-      {authenticated && <Navbar setAuthenticated={setAuthenticated} />}
-      {adminAuthenticated && <AdmNavbar setAdminAuthenticated={setAdminAuthenticated} />}
-      {teacherAuthenticated && <TeacherNavbar setTeacherAuthenticated={setTeacherAuthenticated} />}
+      {authenticated && <Navbar 
+          setAuthenticated={setAuthenticated} 
+          setAdminAuthenticated={setAdminAuthenticated} 
+          setTeacherAuthenticated={setTeacherAuthenticated} 
+      />}
+      {adminAuthenticated && <AdmNavbar 
+          setAuthenticated={setAuthenticated} 
+          setAdminAuthenticated={setAdminAuthenticated} 
+          setTeacherAuthenticated={setTeacherAuthenticated} 
+      />}
+      {teacherAuthenticated && <TeacherNavbar 
+          setAuthenticated={setAuthenticated} 
+          setAdminAuthenticated={setAdminAuthenticated} 
+          setTeacherAuthenticated={setTeacherAuthenticated} 
+      />}
 
       <Routes>
         <Route path="/" element={<LoginLandingPage />} />
         <Route path="/login" element={<LoginPage setAuthenticated={setAuthenticated} />} />
         <Route path="/adminlogin" element={<AdminLoginPage setAdminAuthenticated={setAdminAuthenticated} />} />
         <Route path="/teacherlogin" element={<TeacherLoginPage setTeacherAuthenticated={setTeacherAuthenticated} />} />
+
         <Route path="/home" element={authenticated ? <HomePage /> : <LoginPage setAuthenticated={setAuthenticated} />} />
         <Route path="/transcript" element={authenticated ? <TranscriptPage /> : <LoginPage setAuthenticated={setAuthenticated} />} />
         <Route path="/registration" element={authenticated ? <Regcourse /> : <LoginPage setAuthenticated={setAuthenticated} />} />
         <Route path="/profile" element={authenticated ? <Profile /> : <LoginPage setAuthenticated={setAuthenticated} />} />
+        <Route path="/report" element={authenticated ? <Error /> : <LoginPage setAuthenticated={setAuthenticated} />} />
+        <Route path="/workflow" element={authenticated ? <Todo /> : <LoginPage setAuthenticated={setAuthenticated} />} />
         <Route path="/marks" element={authenticated ? <Marks /> : <LoginPage setAuthenticated={setAuthenticated} />} />
+
         <Route path="/admhome" element={adminAuthenticated ? <AdmHomePage /> : <AdminLoginPage setAdminAuthenticated={setAdminAuthenticated} />} />
         <Route path="/astudent" element={adminAuthenticated ? <Astudent /> : <AdminLoginPage setAdminAuthenticated={setAdminAuthenticated} />} />
-        <Route path="/ateacher" element={adminAuthenticated ? <Ateacher /> : <AdminLoginPage setAdminAuthenticated={setAdminAuthenticated} />} />
+        <Route path="/ateacher" element={adminAuthenticated ? <Ateacher/> : <AdminLoginPage setAdminAuthenticated={setAdminAuthenticated} />} />
         <Route path="/areport" element={adminAuthenticated ? <Areport /> : <AdminLoginPage setAdminAuthenticated={setAdminAuthenticated} />} />
+        <Route path="/aregistration" element={adminAuthenticated ? <Aregistration /> : <AdminLoginPage setAdminAuthenticated={setAdminAuthenticated} />} />
+        <Route path="/aprofile" element={adminAuthenticated ? <Aprofile /> : <AdminLoginPage setAdminAuthenticated={setAdminAuthenticated} />} />
+        <Route path="/aworkflow" element={adminAuthenticated ? <Aworkflow /> : <AdminLoginPage setAdminAuthenticated={setAdminAuthenticated} />} />
+
         <Route path="/teacherhome" element={teacherAuthenticated ? <TeacherHomePage /> : <TeacherLoginPage setTeacherAuthenticated={setTeacherAuthenticated} />} />
         <Route path="/tworkflow" element={teacherAuthenticated ? <Tworkflow /> : <TeacherLoginPage setTeacherAuthenticated={setTeacherAuthenticated} />} />
         <Route path="/tattendance" element={teacherAuthenticated ? <Tattendance /> : <TeacherLoginPage setTeacherAuthenticated={setTeacherAuthenticated} />} />
         <Route path="/tmarks" element={teacherAuthenticated ? <Tmarks /> : <TeacherLoginPage setTeacherAuthenticated={setTeacherAuthenticated} />} />
         <Route path="/tprofile" element={teacherAuthenticated ? <Tprofile /> : <TeacherLoginPage setTeacherAuthenticated={setTeacherAuthenticated} />} />
+        <Route path="/treport" element={teacherAuthenticated ? <Treport /> : <TeacherLoginPage setTeacherAuthenticated={setTeacherAuthenticated} />} />
+        <Route path="/tgrader" element={teacherAuthenticated ? <Tgrader /> : <TeacherLoginPage setTeacherAuthenticated={setTeacherAuthenticated} />} />
         <Route path="*" element={<Error />} />
       </Routes>
 

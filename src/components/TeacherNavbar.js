@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link,useNavigate } from 'react-router-dom';
 import { Menu, Dropdown, Button } from 'antd';
-import { HomeOutlined, FileTextOutlined, CalendarOutlined, BookOutlined, UserOutlined,ProductOutlined ,BarChartOutlined} from '@ant-design/icons';
+import { HomeOutlined, SolutionOutlined,CalendarOutlined, UserOutlined,ProductOutlined ,BarChartOutlined} from '@ant-design/icons';
 import './TeacherNavbar.css';
 
 const TeacherNavbar = ({ setAuthenticated, setAdminAuthenticated, setTeacherAuthenticated }) => {
@@ -31,7 +31,7 @@ const TeacherNavbar = ({ setAuthenticated, setAdminAuthenticated, setTeacherAuth
   return (
     <div className="navbar-container">
       <Menu mode="horizontal" theme="dark" className="navbar">
-        <Menu.Item key="home" icon={<HomeOutlined />}>
+      <Menu.Item key="home" icon={<HomeOutlined />}>
           <Link to="/teacherhome">Home</Link>
         </Menu.Item>
         <Menu.Item key="marks" icon={<BarChartOutlined />}>
@@ -39,6 +39,9 @@ const TeacherNavbar = ({ setAuthenticated, setAdminAuthenticated, setTeacherAuth
         </Menu.Item>
         <Menu.Item key="attendance" icon={<CalendarOutlined />}>
           <Link to="/tattendance">Attendance</Link>
+        </Menu.Item>
+        <Menu.Item key="grader" icon={<SolutionOutlined />}>
+          <Link to="/tgrader">Grader</Link>
         </Menu.Item>
         <Menu.Item key="workflow" icon={<ProductOutlined />}>
           <Link to="/tworkflow">My Workflow</Link>

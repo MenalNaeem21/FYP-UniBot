@@ -1,0 +1,62 @@
+.grader-container {
+    min-height: 100vh;
+    background: #002147;
+}
+
+.welcome-header {
+    text-align: center;
+    padding: 2rem 1rem;
+    background: #F1F6F9;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .welcome-title {
+    color: #000000;
+  }
+  .welcome-header:hover {
+    transform: scale(1.05); /* Increase size by 5% on hover */
+    background-color: #F1F6F9; /* Change to a lighter shade */
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2); /* Add a shadow effect */
+  }
+
+.grader-actions {
+    text-align: center;
+    padding: 2rem;
+    margin-top: 1.5rem;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.grader-actions .ant-btn {
+    border-radius: 8px;
+    font-size: 1rem;
+}
+
+.grades-table {
+    margin: 1.5rem 0;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    padding: 1.5rem;
+}
+
+.grade-report {
+    padding: 1rem;
+}
+
+.grade-stat {
+    margin-bottom: 1rem;
+}
+
+.grade-config-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.grade-config-row .ant-input-number {
+    width: 80px;
+}
