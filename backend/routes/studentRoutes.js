@@ -22,15 +22,24 @@ const generateFakeStudent = () => ({
 });
 
 // Route to seed students
-router.post("/seed", async (req, res) => {
+// router.post("/seed", async (req, res) => {
+//   try {
+
+//     const students = Array.from({ length: 100 }, generateFakeStudent);
+//     await Student.insertMany(students);
+
+//     res.status(201).json({ message: `✅ Inserted ${students.length} dummy students` });
+//   } catch (error) {
+//     res.status(500).json({ message: "❌ Error inserting data", error });
+//   }
+// });
+router.post('/', async (req, res) => {
   try {
-
-    const students = Array.from({ length: 100 }, generateFakeStudent);
-    await Student.insertMany(students);
-
-    res.status(201).json({ message: `✅ Inserted ${students.length} dummy students` });
+    const newStudent = new Student(req.body);
+    await newStudent.save();
+    res.status(201).json(newStudent);
   } catch (error) {
-    res.status(500).json({ message: "❌ Error inserting data", error });
+    res.status(500).json({ message: error.message });
   }
 });
 // Get all students

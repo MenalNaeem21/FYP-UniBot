@@ -34,7 +34,7 @@ const Astudent = () => {
         message.success('Student updated successfully');
       } else {
         // Add new student
-        const response = await axios.post('http://localhost:5000/api/students', values);
+        const response = await axios.post('http://localhost:5000/api/admin/registerst', values);
         setStudents([...students, response.data]);
         message.success('Student added successfully');
       }

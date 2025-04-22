@@ -1,28 +1,43 @@
 import React, { useState } from 'react';
-import { Button, Checkbox, Form, Input, Typography, Card, Modal } from 'antd';
+import { Button, Checkbox, Form, Input, Typography, Card, Modal, message } from 'antd'; // ✅ message imported here
 import { useNavigate } from 'react-router-dom';
 import { MailOutlined } from '@ant-design/icons';
 import './LoginPage.css';
+import axios from 'axios';
 
 const { Title, Text } = Typography;
 
 const LoginPage = ({ setAuthenticated }) => {
   const navigate = useNavigate();
-  const [isForgotPasswordVisible, setIsForgotPasswordVisible] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [isForgotPasswordVisible, setIsForgotPasswordVisible] = useState(false); // ✅ modal visibility state
 
-  const onFinish = (values) => {
-    console.log('Success:', values);
-    // Simple authentication check
-    if (values.username === 'admin' && values.password === 'password') {
-      setAuthenticated(true);
-      navigate('/home');
-    } else {
-      alert('Invalid credentials');
+  const onFinish = async (values) => {
+    setLoading(true);
+    try {
+      const response = await axios.post("http://localhost:5000/api/auth/login-student", {
+        email: values.username, // still using 'username' field but sending it as email
+        password: values.password
+      });
+
+      if (response.data.token) {
+        localStorage.setItem("studentToken", response.data.token); // Store token
+        setAuthenticated(true);
+        message.success("Login successful!");
+        navigate("/home"); // Redirect to home
+      } else {
+        message.error("Invalid credentials");
+      }
+    } catch (error) {
+      console.error("Login Error:", error);
+      message.error(error.response?.data?.message || "Login failed");
     }
+    setLoading(false);
   };
 
   const onFinishFailed = (errorInfo) => {
-    console.log('Failed:', errorInfo);
+    console.log("Failed:", errorInfo);
+    message.error("Please check the form fields.");
   };
 
   const handleForgotPassword = () => {
@@ -41,9 +56,7 @@ const LoginPage = ({ setAuthenticated }) => {
         <Form
           name="basic"
           layout="vertical"
-          initialValues={{
-            remember: true,
-          }}
+          initialValues={{ remember: true }}
           onFinish={onFinish}
           onFinishFailed={onFinishFailed}
           autoComplete="off"
@@ -51,25 +64,15 @@ const LoginPage = ({ setAuthenticated }) => {
           <Form.Item
             label="Username"
             name="username"
-            rules={[
-              {
-                required: true,
-                message: 'Please input your username!',
-              },
-            ]}
+            rules={[{ required: true, message: 'Please input your username!' }]}
           >
-            <Input placeholder="Enter your username" />
+            <Input placeholder="Enter your email" />
           </Form.Item>
 
           <Form.Item
             label="Password"
             name="password"
-            rules={[
-              {
-                required: true,
-                message: 'Please input your password!',
-              },
-            ]}
+            rules={[{ required: true, message: 'Please input your password!' }]}
           >
             <Input.Password placeholder="Enter your password" />
           </Form.Item>
@@ -82,7 +85,7 @@ const LoginPage = ({ setAuthenticated }) => {
           </div>
 
           <Form.Item>
-            <Button type="primary" htmlType="submit" block className="loginn-button">
+            <Button type="primary" htmlType="submit" block loading={loading} className="loginn-button">
               Login
             </Button>
           </Form.Item>
@@ -92,7 +95,7 @@ const LoginPage = ({ setAuthenticated }) => {
       {/* Forgot Password Modal */}
       <Modal
         title="Forgot Password"
-        visible={isForgotPasswordVisible}
+        open={isForgotPasswordVisible}
         onCancel={handleCloseModal}
         footer={[
           <Button key="close" onClick={handleCloseModal}>

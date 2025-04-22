@@ -24,15 +24,57 @@ const verifyAdmin = (req, res, next) => {
 };
 
 // Create a new student (Admin Only)
-router.post("/students", verifyAdmin, async (req, res) => {
+router.post("/registerst",async (req, res) => {
   try {
-    const newStudent = new Student(req.body);
+    const {
+      name,
+      gender,
+      dob,
+      cnic,
+      rollNo,
+      degreeProgram,
+      batch,
+      campus,
+      email,
+      password,
+      mobile,
+      bloodGroup,
+      address,
+      familyInfo
+    } = req.body;
+
+    const existingStudent = await Student.findOne({ email });
+    if (existingStudent) {
+      return res.status(400).json({ message: "Student already exists" });
+    }
+
+    const newStudent = new Student({
+      name,
+      gender,
+      dob,
+      cnic,
+      rollNo,
+      degreeProgram,
+      batch,
+      campus,
+      email,
+      password, // password will be hashed in the pre-save hook
+      mobile,
+      bloodGroup,
+      address,
+      familyInfo,
+      role: "student"
+    });
+
     await newStudent.save();
-    res.status(201).json({ message: "Student created successfully", newStudent });
+
+    res.status(201).json(newStudent);
   } catch (error) {
+    console.error("Admin - Student creation error:", error);
     res.status(500).json({ message: "Error creating student", error });
   }
 });
+
 
 //  Get all students (Admin Only)
 router.get("/students", verifyAdmin, async (req, res) => {
@@ -64,13 +106,54 @@ router.delete("/students/:id", verifyAdmin, async (req, res) => {
   }
 });
 
-// for Teachers
-router.post("/teachers", verifyAdmin, async (req, res) => {
+// Create a new teacher (Admin Only)
+router.post("/registerteacher",async (req, res) => {
   try {
-    const newTeacher = new Teacher(req.body);
+    const {
+      name,
+      gender,
+      dob,
+      cnic,
+      tid,
+      department,
+      datejoined,
+      campus,
+      email,
+      password,
+      mobile,
+      bloodGroup,
+      address,
+      familyInfo
+    } = req.body;
+
+    const existingTeacher = await Teacher.findOne({ email });
+    if (existingTeacher) {
+      return res.status(400).json({ message: "Teacher already exists" });
+    }
+
+    const newTeacher = new Teacher({
+      name,
+      gender,
+      dob,
+      cnic,
+      tid,
+      department,
+      datejoined,
+      campus,
+      email,
+      password,
+      mobile,
+      bloodGroup,
+      address,
+      familyInfo,
+      role: "teacher"
+    });
+
     await newTeacher.save();
-    res.status(201).json({ message: "Teacher created successfully", newTeacher });
+
+    res.status(201).json(newTeacher);
   } catch (error) {
+    console.error("Admin - Teacher creation error:", error);
     res.status(500).json({ message: "Error creating teacher", error });
   }
 });
