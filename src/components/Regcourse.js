@@ -1,10 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Button,
   Table,
   Card,
   Typography,
-  Modal,
   Tag,
   Space,
   message,
@@ -15,74 +14,122 @@ import {
   UserSwitchOutlined,
   MessageOutlined,
 } from '@ant-design/icons';
+import axios from 'axios';
 import './Regcourse.css';
 
 const { Title, Text } = Typography;
 
-const courseData = [
-  {
-    id: 1,
-    name: 'Introduction to Computer Science',
-    professor: 'Dr. Alice Johnson',
-    prerequisites: 'None',
-    sections: ['A', 'B'],
-    seats: 0,
-  },
-  {
-    id: 2,
-    name: 'Data Structures and Algorithms',
-    professor: 'Dr. Bob Smith',
-    prerequisites: 'Intro to Computer Science',
-    sections: ['A'],
-    seats: 5,
-  },
-  {
-    id: 3,
-    name: 'Operating Systems',
-    professor: 'Dr. Carol Lee',
-    prerequisites: 'Data Structures and Algorithms',
-    sections: ['B'],
-    seats: 2,
-  },
-];
-
 const Regcourse = () => {
-  const [availableCourses, setAvailableCourses] = useState(courseData);
+  const [availableCourses, setAvailableCourses] = useState([]);
   const [registeredCourses, setRegisteredCourses] = useState([]);
   const [waitlist, setWaitlist] = useState([]);
+  const [studentData, setStudentData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const handleAddCourse = (course) => {
-    if (course.seats > 0) {
-      setRegisteredCourses([...registeredCourses, course]);
-      setAvailableCourses(
-        availableCourses.map((c) =>
-          c.id === course.id ? { ...c, seats: c.seats - 1 } : c
-        )
-      );
-      message.success(`${course.name} added successfully!`);
-    } else {
-      message.warning(
-        `${course.name} is full. You have been added to the waitlist.`
-      );
-      setWaitlist([...waitlist, course]);
+  // Fetch student data from token
+  useEffect(() => {
+    const fetchStudentData = async () => {
+      try {
+        const token = localStorage.getItem("studentToken");
+        const response = await axios.get("http://localhost:5000/api/auth/studentprofile", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setStudentData(response.data);
+      } catch (error) {
+        console.error("Error fetching student profile:", error);
+        message.error("Failed to load student profile");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStudentData();
+  }, []);
+
+  // Fetch available courses
+  const fetchCourses = useCallback(async () => {
+    try {
+      const response = await axios.get('http://localhost:5000/api/courses');
+      setAvailableCourses(response.data);
+    } catch (error) {
+      message.error('Failed to load courses');
+    }
+  }, []);
+
+  // Fetch student-specific registered/waitlisted courses
+  const fetchStudentCourses = useCallback(async () => {
+    if (!studentData?.email || !studentData?.rollNo) return;
+
+    try {
+      const response = await axios.get(`http://localhost:5000/api/admin/courses`, {
+        params: {
+          email: studentData.email,
+          rollNo: studentData.rollNo,
+        },
+      });
+      setRegisteredCourses(response.data.registered || []);
+      setWaitlist(response.data.waitlisted || []);
+    } catch (error) {
+      message.error('Failed to load your course data');
+    }
+  }, [studentData?.email, studentData?.rollNo]);
+
+  useEffect(() => {
+    if (studentData) {
+      fetchCourses();
+      fetchStudentCourses();
+    }
+  }, [studentData, fetchCourses, fetchStudentCourses]);
+
+  const handleAddCourse = async (course) => {
+    try {
+      const res = await axios.post('http://localhost:5000/api/admin/register', {
+        courseId: course.id,
+        section: course.sections,
+        studentEmail: studentData.email,
+        studentRollNo: studentData.rollNo,
+      });
+  
+      if (res.data.status === 'waitlisted') {
+        setWaitlist([...waitlist, course]);
+        message.warning(`${course.name} is full. You’ve been waitlisted.`);
+      } else {
+        setRegisteredCourses([...registeredCourses, course]);
+        message.success(`${course.name} registered successfully!`);
+      }
+  
+      fetchCourses(); // refresh course list
+    } catch (err) {
+      console.error("Frontend registration error:", err);
+      message.error('Failed to register for course');
+    }
+  };
+  
+
+  const handleDropCourse = async (course) => {
+    try {
+      const res = await axios.post('http://localhost:5000/api/admin/drop', {
+        courseId: course.id,
+        section: course.sections,
+        studentEmail: studentData.email,
+        studentRollNo: studentData.rollNo,
+      });
+
+      if (res.data.status === 'dropped') {
+        setRegisteredCourses(registeredCourses.filter(c => c.id !== course.id));
+      } else if (res.data.status === 'removed_from_waitlist') {
+        setWaitlist(waitlist.filter(c => c.id !== course.id));
+      }
+
+      message.success(`${course.name} removed successfully!`);
+      fetchCourses();
+    } catch (err) {
+      message.error('Failed to drop course');
     }
   };
 
-  const handleDropCourse = (course) => {
-    setRegisteredCourses(
-      registeredCourses.filter((c) => c.id !== course.id)
-    );
-    setAvailableCourses(
-      availableCourses.map((c) =>
-        c.id === course.id ? { ...c, seats: c.seats + 1 } : c
-      )
-    );
-    message.success(`${course.name} dropped successfully!`);
-  };
-
   const handleWaitlistDrop = (course) => {
-    setWaitlist(waitlist.filter((c) => c.id !== course.id));
-    message.info(`${course.name} removed from waitlist.`);
+    handleDropCourse(course);
   };
 
   const courseColumns = [
@@ -94,23 +141,24 @@ const Regcourse = () => {
     },
     {
       title: 'Professor',
-      dataIndex: 'professor',
+      dataIndex: ['instructor', 'name'],
       key: 'professor',
     },
     {
       title: 'Prerequisites',
       dataIndex: 'prerequisites',
       key: 'prerequisites',
+      render: (prereqs) => prereqs?.join(', ') || 'None',
     },
     {
       title: 'Sections',
       dataIndex: 'sections',
       key: 'sections',
-      render: (sections) => sections.join(', '),
+      render: (sections) => Array.isArray(sections) ? sections.join(', ') : sections,
     },
     {
       title: 'Seats Available',
-      dataIndex: 'seats',
+      dataIndex: 'seatAvailability',
       key: 'seats',
       render: (seats) => (
         <Tag color={seats > 0 ? 'green' : 'red'}>{seats}</Tag>
@@ -154,8 +202,13 @@ const Regcourse = () => {
     },
     {
       title: 'Professor',
-      dataIndex: 'professor',
+      dataIndex: ['instructor', 'name'],
       key: 'professor',
+    },
+    {
+      title: 'Section',
+      dataIndex: 'sections',
+      key: 'section',
     },
     {
       title: 'Actions',
@@ -173,6 +226,8 @@ const Regcourse = () => {
     },
   ];
 
+  if (loading) return null;
+
   return (
     <div className="reg-container">
       <header className="welcome-header">
@@ -181,13 +236,13 @@ const Regcourse = () => {
           Register courses and access waitlist.
         </Text>
       </header>
-      
+
       <main className="reg-content">
         <Card title="Available Courses" className="reg-card">
           <Table
             dataSource={availableCourses}
             columns={courseColumns}
-            rowKey="id"
+            rowKey="_id"
             pagination={{ pageSize: 5 }}
           />
         </Card>
@@ -196,7 +251,7 @@ const Regcourse = () => {
           <Table
             dataSource={registeredCourses}
             columns={registeredColumns}
-            rowKey="id"
+            rowKey="_id"
             pagination={{ pageSize: 5 }}
           />
         </Card>
@@ -205,7 +260,7 @@ const Regcourse = () => {
           <Table
             dataSource={waitlist}
             columns={registeredColumns}
-            rowKey="id"
+            rowKey="_id"
             pagination={{ pageSize: 5 }}
           />
         </Card>

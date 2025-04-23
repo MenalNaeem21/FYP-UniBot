@@ -16,8 +16,22 @@ const studentSchema = new mongoose.Schema({
   bloodGroup: String,
   address: String,
   familyInfo: String,
-  role: { type: String, enum: ["student", "admin"], default: "student" }, // Defining roles
+  role: { type: String, enum: ["student", "admin"], default: "student" },
 
+  registeredCourses: [
+    {
+      id: String,      // e.g. 'CS101'
+      section: String, // e.g. 'A'
+    }
+  ],
+  waitlistedCourses: [
+    {
+      id: String,
+      section: String,
+    }
+  ],
+  
+  
 });
 
 // Hash password before saving the user
@@ -30,6 +44,5 @@ studentSchema.pre("save", async function (next) {
 studentSchema.methods.comparePassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
-
 
 module.exports = mongoose.model("Student", studentSchema);

@@ -1,169 +1,213 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Button, Modal, Form, Input, Typography, Card, Space, Select,Popconfirm } from 'antd';
-import { EditOutlined, EyeOutlined, PlusOutlined, UserOutlined, TeamOutlined, DeleteOutlined } from '@ant-design/icons';
+import { Table, Button, Modal, Form, Input, Select, message } from 'antd';
+import { EditOutlined, DeleteOutlined, EyeOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons';
+import axios from 'axios';
 import './Aregistration.css';
+
 const { Option } = Select;
-const { Title, Text } = Typography;
 
 const Aregistration = () => {
   const [courses, setCourses] = useState([]);
-  const [students, setStudents] = useState([]);
+  const [teachers, setTeachers] = useState([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [isDetailsModalVisible, setIsDetailsModalVisible] = useState(false);
-  const [isStudentModalVisible, setIsStudentModalVisible] = useState(false);
-  const [isAddStudentModalVisible, setIsAddStudentModalVisible] = useState(false);
   const [editingCourse, setEditingCourse] = useState(null);
-  const [selectedCourseDetails, setSelectedCourseDetails] = useState(null);
+  const [viewingCourse, setViewingCourse] = useState(null);
+  const [isViewModalVisible, setIsViewModalVisible] = useState(false);
+  const [availableCourses, setAvailableCourses] = useState([]);
+
+  const [searchQuery, setSearchQuery] = useState('');
   const [form] = Form.useForm();
-  const [studentForm] = Form.useForm();
 
-  // 🗂️ Sample Data on Load
+  // Fetch courses and teachers from backend
   useEffect(() => {
-    setCourses([
-        { id: 'CS101', name: 'Introduction to Computer Science', instructor: 'Dr. Alice', instructorId: 'I001', semester: 'Fall', sections: 'A', seatAvailability: 25 },
-        { id: 'MA202', name: 'Linear Algebra', instructor: 'Prof. Bob', instructorId: 'I002', semester: 'Spring', sections: 'B', seatAvailability: 20 },
-        { id: 'PHY303', name: 'Modern Physics', instructor: 'Dr. Eve', instructorId: 'I003', semester: 'Fall', sections: 'C', seatAvailability: 30 },
-        { id: 'EE404', name: 'Digital Electronics', instructor: 'Dr. Charlie', instructorId: 'I004', semester: 'Spring', sections: 'D', seatAvailability: 15 },
-        { id: 'EN505', name: 'Advanced English', instructor: 'Prof. Diana', instructorId: 'I005', semester: 'Summer', sections: 'E', seatAvailability: 10 },
-        { id: 'CS606', name: 'Artificial Intelligence', instructor: 'Dr. Alan', instructorId: 'I006', semester: 'Fall', sections: 'F', seatAvailability: 12 },
-        { id: 'STAT707', name: 'Statistics and Probability', instructor: 'Prof. John', instructorId: 'I007', semester: 'Spring', sections: 'G', seatAvailability: 18 },
-        // { id: 'BIO808', name: 'Molecular Biology', instructor: 'Dr. Sarah', instructorId: 'I008', semester: 'Summer', sections: 'H', seatAvailability: 22 },
-    ]);
-
-    setStudents([
-        { rollNo: 'S101', name: 'Alice Johnson', email: 'alice@example.com' },
-        { rollNo: 'S102', name: 'Bob Smith', email: 'bob@example.com' },
-        { rollNo: 'S103', name: 'Charlie Brown', email: 'charlie@example.com' },
-        { rollNo: 'S104', name: 'Diana Prince', email: 'diana@example.com' },
-        { rollNo: 'S105', name: 'Eve Adams', email: 'eve@example.com' },
-        { rollNo: 'S106', name: 'Frank White', email: 'frank@example.com' },
-        { rollNo: 'S107', name: 'Grace Lee', email: 'grace@example.com' },
-        { rollNo: 'S108', name: 'Hank Pym', email: 'hank@example.com' },
-    ]);
+    axios.get('http://localhost:5000/api/courses')
+      .then(response => setCourses(response.data))
+      .catch(error => console.error('Error fetching courses:', error));
+    
+    axios.get('http://localhost:5000/api/teachers')
+      .then(response => setTeachers(response.data))
+      .catch(error => console.error('Error fetching teachers:', error));
+     
+    axios.get('http://localhost:5000/api/courses')
+      .then(response => {
+        setCourses(response.data); // your current table data
+        setAvailableCourses(response.data); // for prerequisites
+      })
+      .catch(error => console.error('Error fetching courses:', error));
+      
   }, []);
-
-  // 🚀 Add/Edit Course
-  const handleAddEditCourse = (values) => {
-    if (editingCourse) {
-      setCourses((prev) =>
-        prev.map((course) =>
-          course.id === editingCourse.id ? { ...values, id: editingCourse.id } : course
-        )
-      );
-      setEditingCourse(null);
-    } else {
-      setCourses((prev) => [...prev, { ...values, id: Date.now().toString() }]);
-    }
-    setIsModalVisible(false);
-    form.resetFields();
+  const handleView = (record) => {
+    setViewingCourse(record);
+    setIsViewModalVisible(true);
   };
+  
+  // Handle Add/Edit Course
+  const handleSaveCourse = async (values) => {
+    try {
+      const selectedTeacher = teachers.find(t => t.tid === values.instructor.value);
 
-  // 👁️ View Course Details
-  const handleViewDetails = (course) => {
-    setSelectedCourseDetails(course);
-    setIsDetailsModalVisible(true);
-  };
+      if (!selectedTeacher) {
+        message.error('Invalid instructor selected.');
+        return;
+      }
 
-  // 🧑‍🎓 View Students
-  const handleViewStudents = () => {
-    setIsStudentModalVisible(true);
-  };
-
-  // ➕ Add Student
-  const handleAddStudent = (values) => {
-    setStudents((prev) => [
-      ...prev,
-      {
-        rollNo: `S${Date.now()}`,
+      const payload = {
+        id: values.id,
         name: values.name,
-        email: values.email,
+        instructor: {
+          id: selectedTeacher.tid,
+          name: selectedTeacher.name,
+        },
+        semester: values.semester,
+        sections: values.sections,
+        seatAvailability: Number(values.seatAvailability),
+        creditHours: Number(values.creditHours),
+        prerequisites: values.prerequisites || [],
+      };
+
+      let response;
+      if (editingCourse) {
+        response = await axios.put(`http://localhost:5000/api/courses/${editingCourse._id}`, payload);
+        setCourses(courses.map(course => course._id === editingCourse._id ? response.data : course));
+        message.success('Course updated successfully');
+      } else {
+        response = await axios.post('http://localhost:5000/api/admin/registercourse', payload);
+        setCourses([...courses, response.data]);
+        message.success('Course added successfully');
+      }
+
+      setIsModalVisible(false);
+      form.resetFields();
+      setEditingCourse(null);
+    } catch (error) {
+      console.error('Error saving course:', error);
+      message.error('Error saving course');
+    }
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      await axios.delete(`http://localhost:5000/api/courses/${id}`);
+      setCourses(courses.filter(course => course._id !== id));
+      message.success('Course deleted successfully');
+    } catch (error) {
+      message.error('Error deleting course');
+    }
+  };
+
+  const handleEdit = (record) => {
+    setEditingCourse(record);
+    form.setFieldsValue({
+      id: record.id,
+      name: record.name,
+      semester: record.semester,
+      sections: record.sections,
+      seatAvailability: record.seatAvailability,
+      creditHours: record.creditHours,
+      instructor: {
+        value: record.instructor?.id,
+        label: `${record.instructor?.name} (${record.instructor?.id})`
       },
-    ]);
-    setIsAddStudentModalVisible(false);
-    studentForm.resetFields();
+      prerequisites: record.prerequisites || [],
+    });
+    setIsModalVisible(true);
   };
 
-  // ❌ Delete Student
-  const handleDeleteStudent = (rollNo) => {
-    setStudents((prev) => prev.filter((student) => student.rollNo !== rollNo));
-  };
-
-  const courseColumns = [
-    { title: 'Course Name', dataIndex: 'name', key: 'name' },
-    { title: 'Course ID', dataIndex: 'id', key: 'id' },
-    { title: 'Instructor ID', dataIndex: 'instructorId', key: 'instructorId' },
-    { title: 'Instructor Name', dataIndex: 'instructor', key: 'instructor' },
+  const columns = [
+    { title: 'Course Name', dataIndex: 'name' },
+    { title: 'Course ID', dataIndex: 'id' },
+    { title: 'Section', dataIndex: 'sections' },
+    {
+      title: 'Instructor',
+      render: (_, record) => record.instructor?.name || 'N/A'
+    },
     {
       title: 'Actions',
-      key: 'actions',
       render: (_, record) => (
         <>
-          <Button icon={<EyeOutlined />} onClick={() => handleViewDetails(record)} style={{ marginRight: '8px' }} />
-          <Button icon={<TeamOutlined />} onClick={handleViewStudents} style={{ marginRight: '8px' }} />
-          <Button
-            icon={<EditOutlined />}
-            onClick={() => {
-              setEditingCourse(record);
-              form.setFieldsValue(record);
-              setIsModalVisible(true);
-            }}
-          />
+          <Button icon={<EyeOutlined />} onClick={() => handleView(record)} />
+          <Button icon={<EditOutlined />} onClick={() => handleEdit(record)} style={{ marginLeft: '8px' }} />
+          <Button icon={<DeleteOutlined />} onClick={() => handleDelete(record._id)} danger style={{ marginLeft: '8px' }} />
         </>
       ),
     },
   ];
 
-  const studentColumns = [
-    { title: 'Roll No', dataIndex: 'rollNo', key: 'rollNo' },
-    { title: 'Name', dataIndex: 'name', key: 'name' },
-    { title: 'Email', dataIndex: 'email', key: 'email' },
-    {
-      title: 'Actions',
-      key: 'actions',
-      render: (_, record) => (
-        <Popconfirm
-          title="Are you sure you want to delete this student?"
-          onConfirm={() => handleDeleteStudent(record.rollNo)}
-          okText="Yes"
-          cancelText="No"
-        >
-          <Button icon={<DeleteOutlined />} danger />
-        </Popconfirm>
-      ),
-    },
-  ];
-
   return (
-    <div className="course-management-container">
-      {/* 📚 Header */}
-        <header className="welcome-header">
-        <Title level={2} className="welcome-title">📚 Course Management</Title>
-        <Text type="secondary" >
-        Add and manage course registrations effectively.
-        </Text>
+    <div className="admin-courses-container">
+      <header className="welcome-header">
+        <h2>📚 Course Management</h2>
+        <p>Add and manage courses efficiently.</p>
       </header>
+
       <header className="admin-header">
+        <Input
+          placeholder="Search by Course Name or ID"
+          prefix={<SearchOutlined />}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="search-bar"
+        />
         <div className="marks-buttons">
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={() => {
-            setIsModalVisible(true);
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => {
+            setEditingCourse(null);
             form.resetFields();
-          }}
-        >
-          Add New Course
-        </Button>
+            setIsModalVisible(true);
+          }}>
+            Add New Course
+          </Button>
         </div>
       </header>
 
-      {/* 📊 Course Table */}
-      <Table columns={courseColumns} dataSource={courses} rowKey="id" pagination={{ pageSize: 8 }} className="course-table" />
+      <Table
+        columns={columns}
+        dataSource={courses.filter(course =>
+          (course.name?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+          (course.id?.toLowerCase() || '').includes(searchQuery.toLowerCase())
+        )}
+        rowKey="_id"
+        pagination={{ pageSize: 7 }}
+        className="course-table"
+      />
+      <Modal
+  title="Course Details"
+  visible={isViewModalVisible}
+  onCancel={() => {
+    setIsViewModalVisible(false);
+    setViewingCourse(null);
+  }}
+  footer={[
+    <Button key="close" onClick={() => setIsViewModalVisible(false)}>
+      Close
+    </Button>
+  ]}
+>
+  {viewingCourse && (
+    <div>
+      <p><strong>Course ID:</strong> {viewingCourse.id}</p>
+      <p><strong>Course Name:</strong> {viewingCourse.name}</p>
+      <p><strong>Instructor:</strong> {viewingCourse.instructor?.name} ({viewingCourse.instructor?.id})</p>
+      <p><strong>Semester:</strong> {viewingCourse.semester}</p>
+      <p><strong>Section:</strong> {viewingCourse.sections}</p>
+      <p><strong>Seats Available:</strong> {viewingCourse.seatAvailability}</p>
+      <p><strong>Credit Hours:</strong> {viewingCourse.creditHours}</p>
+      <p><strong>Prerequisites:</strong> {
+      viewingCourse.prerequisites?.length > 0
+        ? viewingCourse.prerequisites
+            .map(pid => {
+              const match = availableCourses.find(c => c.id === pid);
+              return match ? `${match.name} (${match.id})` : pid;
+            })
+            .join(', ')
+        : 'None'
+    }</p>
 
-      {/* 📝 Add/Edit Modal */}
+    </div>
+  )}
+</Modal>
+
       <Modal
         title={editingCourse ? 'Edit Course' : 'Add Course'}
-        open={isModalVisible}
+        visible={isModalVisible}
         onCancel={() => {
           setIsModalVisible(false);
           setEditingCourse(null);
@@ -171,74 +215,60 @@ const Aregistration = () => {
         }}
         onOk={() => form.submit()}
       >
-        <Form form={form} layout="vertical" onFinish={handleAddEditCourse}>
-          <Form.Item name="name" label="Course Name" rules={[{ required: true }]}>
-            <Input />
-          </Form.Item>
+        <Form form={form} layout="vertical" onFinish={handleSaveCourse}>
           <Form.Item name="id" label="Course ID" rules={[{ required: true }]}>
             <Input />
           </Form.Item>
-          <Form.Item name="instructor" label="Instructor Name" rules={[{ required: true }]}>
+          <Form.Item name="name" label="Course Name" rules={[{ required: true }]}>
             <Input />
           </Form.Item>
-          <Form.Item name="instructorId" label="Instructor ID" rules={[{ required: true }]}>
-            <Input />
-          </Form.Item>
-          <Form.Item name="semester" label="Semester Offered" rules={[{ required: true }]}>
+          <Form.Item name="semester" label="Semester" rules={[{ required: true }]}>
             <Select>
               <Option value="Fall">Fall</Option>
               <Option value="Spring">Spring</Option>
               <Option value="Summer">Summer</Option>
             </Select>
           </Form.Item>
-          <Form.Item name="sections" label="Sections (e.g., A, B, C)" rules={[{ required: true }]}>
-            <Input />
+          <Form.Item name="sections" label="Section" rules={[{ required: true }]}>
+          <Select>
+              <Option value="A">A</Option>
+              <Option value="B">B</Option>
+              <Option value="C">C</Option>
+              <Option value="D">D</Option>
+              <Option value="E">E</Option>
+              <Option value="F">F</Option>
+              <Option value="G">G</Option>
+              <Option value="H">H</Option>
+            </Select>
           </Form.Item>
-          <Form.Item name="seatAvailability" label="Seat Availability" rules={[{ required: true }]}>
+          <Form.Item name="seatAvailability" label="Seats Available" rules={[{ required: true }]}>
             <Input type="number" />
           </Form.Item>
-        </Form>
-      </Modal>
-
-      {/* 📄 Course Details Modal */}
-      <Modal title="Course Details" open={isDetailsModalVisible} onCancel={() => setIsDetailsModalVisible(false)} footer={null}>
-        {selectedCourseDetails && (
-          <Card>
-            <p><strong>Course Name:</strong> {selectedCourseDetails.name}</p>
-            <p><strong>Course ID:</strong> {selectedCourseDetails.id}</p>
-            <p><strong>Instructor:</strong> {selectedCourseDetails.instructor}</p>
-            <p><strong>Instructor ID:</strong> {selectedCourseDetails.instructorId}</p>
-            <p><strong>Semester:</strong> {selectedCourseDetails.semester}</p>
-            <p><strong>Sections:</strong> {selectedCourseDetails.sections}</p>
-            <p><strong>Seat Availability:</strong> {selectedCourseDetails.seatAvailability}</p>
-          </Card>
-        )}
-      </Modal>
-
-      {/* 🧑‍🎓 Students Modal */}
-      <Modal
-        title="Enrolled Students"
-        open={isStudentModalVisible}
-        onCancel={() => setIsStudentModalVisible(false)}
-        footer={[
-          <Button type="primary" onClick={() => setIsAddStudentModalVisible(true)}>Add Student</Button>
-        ]}
-      >
-        <Table columns={studentColumns} dataSource={students} rowKey="rollNo" pagination={{ pageSize: 5 }} />
-      </Modal>
-
-      {/* ➕ Add Student Modal */}
-      <Modal title="Add New Student" open={isAddStudentModalVisible} onCancel={() => setIsAddStudentModalVisible(false)} onOk={() => studentForm.submit()}>
-        <Form form={studentForm} layout="vertical" onFinish={handleAddStudent}>
-          <Form.Item name="name" label="Name" rules={[{ required: true }]}>
-            <Input />
+          <Form.Item name="creditHours" label="Credit Hours" rules={[{ required: true }]}>
+            <Input type="number" />
           </Form.Item>
-          <Form.Item name="email" label="Email" rules={[{ required: true }]}>
-            <Input />
+          <Form.Item name="instructor" label="Instructor" rules={[{ required: true }]}>
+            <Select labelInValue>
+              {teachers.map(teacher => (
+                <Option key={teacher.tid} value={teacher.tid}>
+                  {teacher.name} ({teacher.tid})
+                </Option>
+              ))}
+            </Select>
           </Form.Item>
-          <Form.Item name="rollNo" label="rollNo" rules={[{ required: true }]}>
-            <Input />
-          </Form.Item>
+          <Form.Item name="prerequisites" label="Prerequisites">
+          <Select
+            mode="multiple"
+            placeholder="Select prerequisite courses"
+            optionLabelProp="label"
+          >
+            {availableCourses.map(course => (
+              <Option key={course.id} value={course.id} label={`${course.name} (${course.id})`}>
+                {course.name} ({course.id})
+              </Option>
+            ))}
+          </Select>
+        </Form.Item>
         </Form>
       </Modal>
     </div>
