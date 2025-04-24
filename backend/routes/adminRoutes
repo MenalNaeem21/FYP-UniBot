@@ -420,9 +420,6 @@ router.post('/registercourse', async (req, res) => {
       res.status(500).json({ message: "Server error while fetching students" });
     }
   });
-  
-<<<<<<< HEAD
-=======
   router.post('/attendance', async (req, res) => {
     try {
       const attendance = new Attendance(req.body);
@@ -466,12 +463,5 @@ router.post('/registercourse', async (req, res) => {
       res.status(500).json({ message: 'Server error while fetching courses' });
     }
   });
-  
-  
-  
-  
-
-  
->>>>>>> backend-testing
 
 module.exports = router;
