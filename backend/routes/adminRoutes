@@ -2,6 +2,7 @@ const express = require("express");
 const Student = require("../models/Student");
 const Teacher = require("../models/Teacher");
 const Course = require('../models/Course');
+const Attendance = require("../models/attendance");
 const jwt = require("jsonwebtoken");
 
 const router = express.Router();
@@ -419,6 +420,55 @@ router.post('/registercourse', async (req, res) => {
       res.status(500).json({ message: "Server error while fetching students" });
     }
   });
+  
+  router.post('/attendance', async (req, res) => {
+    try {
+      const attendance = new Attendance(req.body);
+      await attendance.save();
+      res.status(201).json(attendance);
+    } catch (error) {
+      console.error('Error saving attendance:', error);
+      res.status(500).json({ message: 'Server error while saving attendance' });
+    }
+  });
+
+  router.get('/attendance/:courseId/:section', async (req, res) => {
+    const { courseId, section } = req.params;
+    try {
+      const records = await Attendance.find({ courseId, section }).sort({ date: -1 });
+      res.status(200).json(records);
+    } catch (error) {
+      console.error('Error fetching attendance:', error);
+      res.status(500).json({ message: 'Server error while fetching attendance' });
+    }
+  });
+  
+  router.put('/attendance/:id', async (req, res) => {
+    try {
+      const updated = await Attendance.findByIdAndUpdate(req.params.id, req.body, { new: true });
+      res.status(200).json(updated);
+    } catch (error) {
+      console.error('Error updating attendance:', error);
+      res.status(500).json({ message: 'Server error while updating attendance' });
+    }
+  });
+
+  router.get('/teachers/:tid/courses', async (req, res) => {
+    const { tid } = req.params;
+  
+    try {
+      const courses = await Course.find({ 'instructor.id': tid.trim() }); // normalize & compare string
+      res.status(200).json(courses);
+    } catch (error) {
+      console.error('Error fetching teacher courses:', error);
+      res.status(500).json({ message: 'Server error while fetching courses' });
+    }
+  });
+  
+  
+  
+  
+
   
 
 module.exports = router;

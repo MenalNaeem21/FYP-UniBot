@@ -93,6 +93,21 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
+router.get('/teachers/:tid/courses', async (req, res) => {
+  const { tid } = req.params;
+
+  try {
+    const courses = await Course.find({
+      'instructor.id': tid.trim() // Ensure no spaces
+    });
+
+    res.status(200).json(courses);
+  } catch (error) {
+    console.error('Error fetching teacher courses:', error);
+    res.status(500).json({ message: 'Server error while fetching courses' });
+  }
+});
+
 
 
 module.exports = router;

@@ -4,7 +4,7 @@ const jwt = require("jsonwebtoken");
 const Student = require("../models/Student");
 const Teacher = require("../models/Teacher");
 const Admin = require("../models/admin"); // Ensure correct import
-
+const Attendance = require("../models/attendance");
 const router = express.Router();
 
 // User Registration (Students & Teachers)
@@ -235,7 +235,13 @@ router.post("/login-teacher", async (req, res) => {
     const token = jwt.sign({ id: teacher._id, role: "teacher" }, jwtSecret, { expiresIn: "1h" });
 
     console.log("✅ Token Generated:", token);
-    res.json({ message: "Teacher login successful", token, role: "teacher" });
+    res.json({
+      message: "Teacher login successful",
+      token,
+      role: "teacher",
+      tid: teacher.tid, // ✅ send this to frontend
+    });
+    
 
   } catch (error) {
     console.error("Teacher Login Error:", error);
