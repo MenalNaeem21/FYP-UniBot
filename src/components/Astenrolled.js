@@ -110,8 +110,11 @@ const Astenrolled = () => {
     { title: 'Course ID', dataIndex: 'id', key: 'id' },
     { title: 'Instructor ID', dataIndex: ['instructor', 'id'], key: 'instructorId' },
     { title: 'Instructor Name', dataIndex: ['instructor', 'name'], key: 'instructor' },
+<<<<<<< HEAD
     { title: 'Section', dataIndex: 'sections', key: 'sections' },
 
+=======
+>>>>>>> backend-testing
     {
       title: 'Actions',
       key: 'actions',

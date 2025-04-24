@@ -21,12 +21,14 @@ const TeacherLoginPage = ({ setTeacherAuthenticated }) => {
 
       if (response.data.token) {
         localStorage.setItem("teacherToken", response.data.token); // Store token
+        localStorage.setItem("tid", response.data.tid);            // ✅ Store tid
         setTeacherAuthenticated(true);
         message.success("Login successful!");
         navigate("/teacherhome");
       } else {
         message.error("Invalid credentials");
       }
+      
     } catch (error) {
       console.error("Teacher Login Error:", error);
       message.error(error.response?.data?.message || "Login failed");
