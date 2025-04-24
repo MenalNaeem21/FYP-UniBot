@@ -41,7 +41,10 @@ const AdmNavbar = ({ setAuthenticated, setAdminAuthenticated, setTeacherAuthenti
           <Link to="/areport">Reports</Link>
         </Menu.Item>
         <Menu.Item key="registration" icon={<BarChartOutlined />}>
-          <Link to="/aregistration">Registration</Link>
+          <Link to="/aregistration">Courses</Link>
+        </Menu.Item>
+        <Menu.Item key="enrolled" icon={<BarChartOutlined />}>
+          <Link to="/Astenrolled">Registrations</Link>
         </Menu.Item>
         <Menu.Item key="workflow" icon={<ProductOutlined />}>
           <Link to="/aworkflow">My Workflow</Link>

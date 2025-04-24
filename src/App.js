@@ -17,6 +17,7 @@ import Astudent from './components/Astudent';
 import Ateacher from './components/Ateacher';
 import Areport from './components/Areport';
 import Aregistration from './components/Aregistration';
+import Astenrolled from './components/Astenrolled';
 import Aprofile from './components/Aprofile';
 import Aworkflow from './components/Aworkflow';
 import TeacherLoginPage from './components/TeacherLoginPage';
@@ -109,6 +110,7 @@ const App = () => {
         <Route path="/aregistration" element={adminAuthenticated ? <Aregistration /> : <AdminLoginPage setAdminAuthenticated={setAdminAuthenticated} />} />
         <Route path="/aprofile" element={adminAuthenticated ? <Aprofile /> : <AdminLoginPage setAdminAuthenticated={setAdminAuthenticated} />} />
         <Route path="/aworkflow" element={adminAuthenticated ? <Aworkflow /> : <AdminLoginPage setAdminAuthenticated={setAdminAuthenticated} />} />
+        <Route path="/Astenrolled" element={adminAuthenticated ? <Astenrolled /> : <AdminLoginPage setAdminAuthenticated={setAdminAuthenticated} />} />
 
         <Route path="/teacherhome" element={teacherAuthenticated ? <TeacherHomePage /> : <TeacherLoginPage setTeacherAuthenticated={setTeacherAuthenticated} />} />
         <Route path="/tworkflow" element={teacherAuthenticated ? <Tworkflow /> : <TeacherLoginPage setTeacherAuthenticated={setTeacherAuthenticated} />} />
