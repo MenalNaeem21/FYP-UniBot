@@ -1,179 +1,228 @@
-import React, { useState } from 'react';
-import { Table, Button, Input, Select, Card, Typography, Modal, Space } from 'antd';
-import { EditOutlined, EyeOutlined, PlusOutlined } from '@ant-design/icons';
+// src/components/Tmarks.js
+
+import React, { useState, useEffect } from 'react';
+import { Table, Button, Input, Select, Card, Typography, Space, message } from 'antd';
+import { EyeOutlined } from '@ant-design/icons';
+import axios from 'axios';
 import './Tmarks.css';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
 
 const Tmarks = () => {
-  const [marksType, setMarksType] = useState(''); // Quiz, Assignment, etc.
-  const [specificType, setSpecificType] = useState(''); // Quiz 1, Assignment 1, etc.
-  const [totalMarks, setTotalMarks] = useState(''); // Total Marks
-  const [students, setStudents] = useState([
-    { rollNo: 'CS101', name: 'Alice', marks: '' },
-    { rollNo: 'CS102', name: 'Bob', marks: '' },
-    { rollNo: 'CS103', name: 'Charlie', marks: '' },
-  ]);
+  const [marksType, setMarksType] = useState('');
+  const [specificType, setSpecificType] = useState('');
+  const [totalMarks, setTotalMarks] = useState('');
+  const [students, setStudents] = useState([]);
+  const [teacherCourses, setTeacherCourses] = useState([]);
+  const [selectedCourse, setSelectedCourse] = useState(null);
   const [marksRecords, setMarksRecords] = useState([]);
-  const [selectedRecord, setSelectedRecord] = useState(null);
   const [viewDetails, setViewDetails] = useState(false);
+  const [selectedRecord, setSelectedRecord] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingId, setEditingId] = useState(null);
 
-  // Add a new marks record
-  const handleAddMarks = () => {
-    if (!marksType || !totalMarks) {
-      alert('Please select a marks type and enter total marks!');
-      return;
+  const tid = localStorage.getItem('tid');
+
+  useEffect(() => {
+    if (tid) fetchCourses();
+  }, [tid]);
+
+  const fetchCourses = async () => {
+    try {
+      const res = await axios.get(`http://localhost:5000/api/admin/teachers/${tid}/courses`);
+      setTeacherCourses(res.data);
+    } catch {
+      message.error('Failed to load courses');
+    }
+  };
+
+  const handleCourseChange = async (value) => {
+    const course = teacherCourses.find(c => `${c.id}-${c.sections}` === value);
+    if (!course) return;
+
+    setSelectedCourse(course);
+    try {
+      const res = await axios.get(`http://localhost:5000/api/admin/courses/${course.id}/sections/${course.sections}/students`);
+      setStudents(res.data.map(s => ({ ...s, marks: '' })));
+    } catch {
+      message.error('Failed to load students');
     }
 
-    const newRecord = {
-      id: `${marksType}-${specificType || 'General'}-${Date.now()}`,
+    try {
+      const res = await axios.get(`http://localhost:5000/api/admin/marks/${course.id}/${course.sections}`);
+      setMarksRecords(res.data);
+    } catch {
+      setMarksRecords([]);
+    }
+  };
+
+  const handleAddMarks = async () => {
+    if (!marksType || !totalMarks || !selectedCourse) {
+      return message.warning('Fill all required fields');
+    }
+
+    const isDuplicate = marksRecords.some(r =>
+      r.type === marksType &&
+      (marksType === 'Quiz' || marksType === 'Assignment'
+        ? r.specificType === (specificType || 'General')
+        : true)
+    );
+
+    if (isDuplicate && !isEditing) {
+      return message.error(`${marksType} ${specificType || ''} already exists.`);
+    }
+
+    const invalid = students.find(s => isNaN(s.marks) || s.marks < 0 || s.marks > totalMarks);
+    if (invalid) return message.error('Marks must be between 0 and total marks');
+
+    const payload = {
+      courseId: selectedCourse.id,
+      section: selectedCourse.sections,
       type: marksType,
       specificType: specificType || 'General',
       totalMarks,
-      students: students.map((student) => ({
-        rollNo: student.rollNo,
-        name: student.name,
-        marks: student.marks || '0',
-      })),
+      students,
     };
 
-    setMarksRecords([...marksRecords, newRecord]);
+    try {
+      if (isEditing) {
+        const res = await axios.put(`http://localhost:5000/api/admin/marks/${editingId}`, payload);
+        setMarksRecords(marksRecords.map(r => r._id === editingId ? res.data : r));
+        message.success('Marks updated');
+      } else {
+        const res = await axios.post(`http://localhost:5000/api/admin/marks`, payload);
+        setMarksRecords([res.data, ...marksRecords]);
+        message.success('Marks added');
+      }
+      resetForm();
+    } catch {
+      message.error('Failed to save marks');
+    }
+  };
+
+  const handleEdit = (record) => {
+    setIsEditing(true);
+    setEditingId(record._id);
+    setMarksType(record.type);
+    setSpecificType(record.specificType !== 'General' ? record.specificType : '');
+    setTotalMarks(record.totalMarks);
+    setStudents(record.students.map(s => ({ ...s })));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const resetForm = () => {
     setMarksType('');
     setSpecificType('');
     setTotalMarks('');
-    setStudents(students.map((student) => ({ ...student, marks: '' })));
-  };
-
-  // View Marks Details
-  const handleViewDetails = (record) => {
-    setSelectedRecord(record);
-    setViewDetails(true);
-  };
-
-  // Edit Student Marks
-  const handleEditMarks = (student) => {
-    const updatedStudents = students.map((s) =>
-      s.rollNo === student.rollNo ? { ...s, marks: student.marks } : s
-    );
-    setStudents(updatedStudents);
+    setStudents([]);
+    setIsEditing(false);
+    setEditingId(null);
   };
 
   const marksColumns = [
-    { title: 'Roll No', dataIndex: 'rollNo', key: 'rollNo' },
-    { title: 'Name', dataIndex: 'name', key: 'name' },
+    { title: 'Roll No', dataIndex: 'rollNo' },
+    { title: 'Name', dataIndex: 'name' },
     {
       title: 'Marks',
-      dataIndex: 'marks',
-      key: 'marks',
-      render: (text, record) => (
-        <Input
-          type="number"
-          defaultValue={text}
-          onChange={(e) =>
-            handleEditMarks({ ...record, marks: e.target.value })
-          }
-        />
-      ),
-    },
+      render: (_, record) => {
+        const idx = students.findIndex(s => s.rollNo === record.rollNo);
+        return (
+          <Input
+            type="number"
+            min={0}
+            max={totalMarks}
+            value={students[idx]?.marks}
+            onChange={e => {
+              const updated = [...students];
+              updated[idx].marks = e.target.value;
+              setStudents(updated);
+            }}
+          />
+        );
+      }
+    }
   ];
 
   const recordsColumns = [
-    { title: 'Type', dataIndex: 'type', key: 'type' },
-    { title: 'Specific', dataIndex: 'specificType', key: 'specificType' },
-    { title: 'Total Marks', dataIndex: 'totalMarks', key: 'totalMarks' },
+    { title: 'Type', dataIndex: 'type' },
+    { title: 'Specific', dataIndex: 'specificType' },
+    { title: 'Total Marks', dataIndex: 'totalMarks' },
     {
       title: 'Actions',
-      key: 'actions',
       render: (_, record) => (
-        <Button
-          icon={<EyeOutlined />}
-          onClick={() => handleViewDetails(record)}
-        >
-          View Details
-        </Button>
-      ),
-    },
+        <Space>
+          <Button icon={<EyeOutlined />} onClick={() => {
+            setSelectedRecord(record);
+            setViewDetails(true);
+          }}>View</Button>
+          <Button onClick={() => handleEdit(record)}>Edit</Button>
+        </Space>
+      )
+    }
   ];
 
   return (
     <div className="marks-container">
       <header className="welcome-header">
-        <Title level={2} className="welcome-title">📊 Teacher Marks Management</Title>
-        <Text type="secondary">
-        Add and manage student marks efficiently.
-        </Text>
+        <Title level={2}>📊 Teacher Marks Management</Title>
+        <Text type="secondary">Add and manage student marks efficiently.</Text>
       </header>
 
-      {/* Marks Input Section */}
-      {!viewDetails && (
-        <Card className="marks-input">
-          <Space className="marks-controls" size="middle">
-            <Select
-              placeholder="Select Marks Type"
-              value={marksType}
-              onChange={(value) => setMarksType(value)}
-              style={{ width: 150 }}
-            >
-              <Option value="Quiz">Quiz</Option>
-              <Option value="Assignment">Assignment</Option>
-              <Option value="Midterm">Midterm</Option>
-              <Option value="Project">Project</Option>
-              <Option value="Final">Final</Option>
-            </Select>
+      <Card className="marks-input">
+        <Space wrap>
+          <Select placeholder="Select Course" style={{ width: 200 }} onChange={handleCourseChange}>
+            {teacherCourses.map(course => (
+              <Option key={`${course.id}-${course.sections}`} value={`${course.id}-${course.sections}`}>
+                {course.id} ({course.sections})
+              </Option>
+            ))}
+          </Select>
 
-            {(marksType === 'Quiz' || marksType === 'Assignment') && (
-              <Input
-                placeholder={`Enter ${marksType} Number (e.g., 1, 2, 3)`}
-                value={specificType}
-                onChange={(e) => setSpecificType(e.target.value)}
-                style={{ width: 200 }}
-              />
-            )}
+          <Select placeholder="Select Marks Type" value={marksType} onChange={setMarksType} style={{ width: 150 }}>
+            <Option value="Quiz">Quiz</Option>
+            <Option value="Assignment">Assignment</Option>
+            <Option value="Sessional 1">Sessional 1</Option>
+            <Option value="Sessional 2">Sessional 2</Option>
+            <Option value="Project">Project</Option>
+            <Option value="Final">Final</Option>
+          </Select>
 
-            <Input
-              placeholder="Enter Total Marks"
-              value={totalMarks}
-              onChange={(e) => setTotalMarks(e.target.value)}
-              type="number"
-              style={{ width: 150 }}
-            />
-            <div className="markss-buttons">
-            <Button type="primary" onClick={handleAddMarks}>
-              Add Marks
-            </Button>
-            </div>
+          {(marksType === 'Quiz' || marksType === 'Assignment') && (
+            <Input placeholder={`${marksType} Number`} value={specificType} onChange={(e) => setSpecificType(e.target.value)} style={{ width: 120 }} />
+          )}
 
-          </Space>
+          <Input placeholder="Total Marks" type="number" value={totalMarks} onChange={(e) => setTotalMarks(e.target.value)} style={{ width: 120 }} />
+
+          <Button type="primary" onClick={handleAddMarks}>
+            {isEditing ? 'Update Marks' : 'Add Marks'}
+          </Button>
+        </Space>
+      </Card>
+
+      {selectedCourse && (
+        <Card style={{ marginTop: 20 }}>
+          <Title level={4}>🧑‍🎓 Enter Marks</Title>
+          <Table dataSource={students} columns={marksColumns} rowKey="rollNo" pagination={false} />
         </Card>
       )}
 
-      {/* Records Display */}
-      {!viewDetails && (
-        <Card className="marks-records">
-          <Title level={4}>📋 Marks Records</Title>
-          <Table
-            dataSource={marksRecords}
-            columns={recordsColumns}
-            rowKey="id"
-            pagination={{ pageSize: 5 }}
-          />
-        </Card>
-      )}
+      <Card className="marks-records" style={{ marginTop: 20 }}>
+        <Title level={4}>📋 Marks Records</Title>
+        <Table dataSource={marksRecords} columns={recordsColumns} rowKey="_id" pagination={{ pageSize: 5 }} />
+      </Card>
 
-      {/* Individual Record Display */}
       {viewDetails && selectedRecord && (
         <Card className="marks-details">
-          <Button onClick={() => setViewDetails(false)} style={{ marginBottom: 10 }}>
-            ⬅️ Back to Records
-          </Button>
-          <Title level={4}>
-            {selectedRecord.type} {selectedRecord.specificType} Details
-          </Title>
-          <Text>Total Marks: {selectedRecord.totalMarks}</Text>
+          <Button onClick={() => setViewDetails(false)} style={{ marginBottom: 10 }}>⬅ Back</Button>
+          <Title level={4}>{selectedRecord.type} {selectedRecord.specificType} - Total: {selectedRecord.totalMarks}</Title>
           <Table
             dataSource={selectedRecord.students}
-            columns={marksColumns}
+            columns={[
+              { title: 'Roll No', dataIndex: 'rollNo' },
+              { title: 'Name', dataIndex: 'name' },
+              { title: 'Marks', dataIndex: 'marks' },
+            ]}
             rowKey="rollNo"
             pagination={{ pageSize: 5 }}
           />

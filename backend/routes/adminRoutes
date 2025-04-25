@@ -3,6 +3,7 @@ const Student = require("../models/Student");
 const Teacher = require("../models/Teacher");
 const Course = require('../models/Course');
 const Attendance = require("../models/attendance");
+const Marks = require('../models/Marks');
 const jwt = require("jsonwebtoken");
 
 const router = express.Router();
@@ -487,6 +488,42 @@ router.get('/attendance/all', async (req, res) => {
     res.status(500).json({ message: 'Server error while fetching attendance records' });
   }
 });
+
+
+
+router.post('/marks', async (req, res) => {
+  try {
+    const newMarks = new Marks(req.body);
+    await newMarks.save();
+    res.status(201).json(newMarks);
+  } catch (error) {
+    console.error("Error adding marks:", error);
+    res.status(500).json({ message: "Error saving marks" });
+  }
+});
+
+router.get('/marks/:courseId/:section', async (req, res) => {
+  try {
+    const { courseId, section } = req.params;
+    const records = await Marks.find({ courseId, section });
+    res.json(records);
+  } catch (error) {
+    console.error("Error fetching marks:", error);
+    res.status(500).json({ message: "Error fetching marks" });
+  }
+});
+
+// PUT route in your backend
+router.put('/marks/:id', async (req, res) => {
+  try {
+    const updated = await Marks.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ message: "Error updating marks" });
+  }
+});
+
+
 
 
 module.exports = router;
