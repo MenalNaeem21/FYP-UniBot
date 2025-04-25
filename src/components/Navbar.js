@@ -46,6 +46,9 @@ const Navbar = ({ setAuthenticated, setAdminAuthenticated, setTeacherAuthenticat
         <Menu.Item key="marks" icon={<BarChartOutlined />}>
           <Link to="/marks">Marks</Link>
         </Menu.Item>
+        <Menu.Item key="attendance" icon={<BarChartOutlined />}>
+          <Link to="/attendance">Attendance</Link>
+        </Menu.Item>
         <Menu.Item key="profile" className="profile-menu" style={{ marginLeft: 'auto' }}>
           <Dropdown overlay={profileMenu} trigger={['click']} placement="bottomRight">
             <Button type="link" icon={<UserOutlined />} style={{ color: 'white' }}>

@@ -10,6 +10,7 @@ import Marks from './components/Marks';
 import Error from './components/Error';
 import Profile from './components/Profile';
 import Todo from './components/Todo';
+import Sattendance from './components/Sattendance';
 import AdminLoginPage from './components/AdminLoginPage';
 import AdmNavbar from './components/AdmNavbar';
 import AdmHomePage from './components/AdmHomePage';
@@ -102,6 +103,7 @@ const App = () => {
         <Route path="/report" element={authenticated ? <Error /> : <LoginPage setAuthenticated={setAuthenticated} />} />
         <Route path="/workflow" element={authenticated ? <Todo /> : <LoginPage setAuthenticated={setAuthenticated} />} />
         <Route path="/marks" element={authenticated ? <Marks /> : <LoginPage setAuthenticated={setAuthenticated} />} />
+        <Route path="/attendance" element={authenticated ? <Sattendance /> : <LoginPage setAuthenticated={setAuthenticated} />} />
 
         <Route path="/admhome" element={adminAuthenticated ? <AdmHomePage /> : <AdminLoginPage setAdminAuthenticated={setAdminAuthenticated} />} />
         <Route path="/astudent" element={adminAuthenticated ? <Astudent /> : <AdminLoginPage setAdminAuthenticated={setAdminAuthenticated} />} />

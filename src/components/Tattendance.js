@@ -85,19 +85,25 @@ const Tattendance = () => {
       message.warning('Please select a course, date and enter lecture title!');
       return;
     }
-
+  
     const payload = {
       courseId: selectedCourse.id,
+      courseName: selectedCourse.name, // ✅ New field
       section: selectedCourse.sections,
       date: attendanceDate.format('YYYY-MM-DD'),
       lectureTitle,
+      instructor: {
+        id: selectedCourse.instructor?.id,
+        name: selectedCourse.instructor?.name
+      },
       students: students.map((student) => ({
         rollNo: student.rollNo,
         name: student.name,
         status: 'P'
       }))
     };
-
+    
+  
     try {
       const res = await axios.post('http://localhost:5000/api/admin/attendance', payload);
       setAttendanceRecords([res.data, ...attendanceRecords]);
@@ -108,6 +114,7 @@ const Tattendance = () => {
       message.error('Failed to add attendance');
     }
   };
+  
 
   const handleViewRecord = (record) => {
     setSelectedRecord(record);
