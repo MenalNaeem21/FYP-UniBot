@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
 
-
 const TimetableSchema = new mongoose.Schema({}, { strict: false });
 
-module.exports = mongoose.model('Timetable', TimetableSchema);
+module.exports = mongoose.models.Timetable || mongoose.model('Timetable', TimetableSchema);
