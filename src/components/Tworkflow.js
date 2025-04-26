@@ -29,65 +29,7 @@ const Tworkflow = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [form] = Form.useForm();
   const [editingTask, setEditingTask] = useState(null);
-  const timetableData = [
-    {
-      key: '1',
-      day: 'Monday',
-      time: '9:00 AM - 10:30 AM',
-      course: 'CS101 - Intro to Programming',
-      section: 'A',
-    },
-    {
-      key: '2',
-      day: 'Tuesday',
-      time: '11:00 AM - 12:30 PM',
-      course: 'MATH201 - Calculus II',
-      section: 'C',
-    },
-    {
-      key: '3',
-      day: 'Wednesday',
-      time: '1:00 PM - 2:30 PM',
-      course: 'ENG101 - English Composition',
-      section: 'D',
-    },
-    {
-      key: '4',
-      day: 'Thursday',
-      time: '10:00 AM - 11:30 AM',
-      course: 'PHYS101 - Physics I',
-      section: 'C',
-    },
-    {
-      key: '5',
-      day: 'Friday',
-      time: '2:00 PM - 3:30 PM',
-      course: 'CS202 - Data Structures',
-      section: 'A',
-    },
-  ];
-  const timetableColumns = [
-    {
-      title: 'Day',
-      dataIndex: 'day',
-      key: 'day',
-    },
-    {
-      title: 'Time',
-      dataIndex: 'time',
-      key: 'time',
-    },
-    {
-      title: 'Course',
-      dataIndex: 'course',
-      key: 'course',
-    },
-    {
-      title: 'Section',
-      dataIndex: 'section',
-      key: 'section',
-    },
-  ];
+  
 
 
   const handleAddTask = (values) => {
@@ -134,16 +76,6 @@ const Tworkflow = () => {
 
   const columns = [
     {
-      title: '✔️',
-      dataIndex: 'completed',
-      render: (completed, record) => (
-        <Checkbox
-          checked={completed}
-          onChange={() => handleComplete(record.id)}
-        />
-      ),
-    },
-    {
       title: 'Task',
       dataIndex: 'title',
       render: (text, record) => (
@@ -157,10 +89,6 @@ const Tworkflow = () => {
     {
       title: 'Due Date',
       dataIndex: 'dueDate',
-    },
-    {
-      title: 'Priority',
-      dataIndex: 'priority',
     },
     {
       title: 'Attachment',
@@ -249,19 +177,6 @@ const Tworkflow = () => {
           >
             <DatePicker className="date-picker" />
           </Form.Item>
-          <Form.Item
-            name="priority"
-            label="Priority Level"
-            rules={[
-              { required: true, message: 'Please select the priority level' },
-            ]}
-          >
-            <Select placeholder="Select priority level">
-              <Option value="High">High</Option>
-              <Option value="Medium">Medium</Option>
-              <Option value="Low">Low</Option>
-            </Select>
-          </Form.Item>
           <Form.Item name="attachment" label="File Attachment (Optional)">
             <Upload beforeUpload={() => false}>
               <Button icon={<UploadOutlined />}>Upload File</Button>
@@ -269,18 +184,7 @@ const Tworkflow = () => {
           </Form.Item>
         </Form>
       </Modal>
-      <Card className="timetable-card">
-          <Title level={3} className="timetable-title">
-            📅 Weekly Class Timetable
-          </Title>
-          <Table
-            dataSource={timetableData}
-            columns={timetableColumns}
-            rowKey="key"
-            className="timetable-table"
-            pagination={false}
-          />
-        </Card>
+      
     </div>
   );
 };

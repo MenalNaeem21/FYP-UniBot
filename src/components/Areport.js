@@ -1,149 +1,186 @@
-// src/components/AdminReport.js
-
-import React, { useState } from 'react';
-import { Input, Button, Card, List, Collapse, Modal, Form,Typography } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Input, Button, Card, List, Collapse, Modal, Form, Typography, message } from 'antd';
 import { CheckCircleOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons';
+import axios from 'axios';
 import './Areport.css';
 
 const { Search } = Input;
 const { Panel } = Collapse;
 const { Title, Text } = Typography;
+
 const Areport = () => {
-  const [issues, setIssues] = useState([
-    { id: 1, title: 'Login Error', description: 'Unable to log in with valid credentials.', resolved: false },
-    { id: 2, title: 'Page Crash', description: 'Profile page crashes on load.', resolved: true },
-    { id: 3, title: 'Slow Performance', description: 'Dashboard takes too long to load.', resolved: false },
-    { id: 4, title: 'Broken Link', description: 'The "Help" link in the footer is not working.', resolved: true },
-  ]);
-  
-  const [faqs, setFaqs] = useState([
-    { id: 1, question: 'How to reset password?', answer: 'Click on "Forgot Password" on the login page.' },
-    { id: 2, question: 'Where to find reports?', answer: 'Navigate to the "Reports" section from the dashboard.' },
-    { id: 3, question: 'How to contact support?', answer: 'Use the "Contact Us" form in the footer or email support@example.com.' },
-    { id: 4, question: 'Can I export data?', answer: 'Yes, use the "Export" button in the top-right corner of the relevant page.' },
-  ]);
-
-
-
+  const [issues, setIssues] = useState([]);
+  const [faqs, setFaqs] = useState([]);
   const [showFAQModal, setShowFAQModal] = useState(false);
   const [editingFAQ, setEditingFAQ] = useState(null);
-
   const [form] = Form.useForm();
 
-  // Search Issues
-  const handleSearchIssues = (value) => {
-    // Implement search logic
-    console.log('Search:', value);
-  };
+  useEffect(() => {
+    fetchComplaints();
+    fetchFaqs();
+  }, []);
 
-  // Toggle Resolved Status
-  const toggleResolved = (id) => {
-    setIssues((prev) =>
-      prev.map((issue) => (issue.id === id ? { ...issue, resolved: !issue.resolved } : issue))
-    );
-  };
-
-  // Delete Issue
-  const deleteIssue = (id) => {
-    setIssues((prev) => prev.filter((issue) => issue.id !== id));
-  };
-
-  // Add or Edit FAQ
-  const handleFAQSubmit = (values) => {
-    if (editingFAQ) {
-      setFaqs((prev) =>
-        prev.map((faq) => (faq.id === editingFAQ.id ? { ...faq, ...values } : faq))
-      );
-      setEditingFAQ(null);
-    } else {
-      setFaqs((prev) => [...prev, { id: Date.now(), ...values }]);
+  const fetchComplaints = async () => {
+    try {
+      const res = await axios.get('http://localhost:5000/api/admin/all-complaints');
+      setIssues(res.data);
+    } catch (error) {
+      console.error('Error fetching complaints:', error);
+      message.error('Failed to load complaints');
     }
-    setShowFAQModal(false);
-    form.resetFields();
   };
 
-  // Edit FAQ
+  const fetchFaqs = async () => {
+    try {
+      const res = await axios.get('http://localhost:5000/api/admin/all-faqs');
+      setFaqs(res.data);
+    } catch (error) {
+      console.error('Error fetching FAQs:', error);
+      message.error('Failed to load FAQs');
+    }
+  };
+
+  const handleSearchIssues = (value) => {
+    if (!value) {
+      fetchComplaints();
+    } else {
+      const filtered = issues.filter(issue => 
+        issue.errorTitle.toLowerCase().includes(value.toLowerCase())
+      );
+      setIssues(filtered);
+    }
+  };
+
+  const resolveComplaint = async (id) => {
+    Modal.confirm({
+      title: 'Mark this complaint as resolved and delete?',
+      okText: 'Yes',
+      okType: 'danger',
+      cancelText: 'No',
+      onOk: async () => {
+        try {
+          await axios.delete(`http://localhost:5000/api/admin/delete-complaint/${id}`);
+          message.success('Complaint resolved and deleted');
+          fetchComplaints();
+        } catch (error) {
+          console.error('Error resolving complaint:', error);
+          message.error('Failed to resolve complaint');
+        }
+      }
+    });
+  };
+
+  const handleFAQSubmit = async (values) => {
+    try {
+      if (editingFAQ) {
+        await axios.put(`http://localhost:5000/api/admin/edit-faq/${editingFAQ._id}`, values);
+        message.success('FAQ updated successfully');
+      } else {
+        await axios.post('http://localhost:5000/api/admin/add-faq', values);
+        message.success('FAQ added successfully');
+      }
+      fetchFaqs();
+      setEditingFAQ(null);
+      setShowFAQModal(false);
+      form.resetFields();
+    } catch (error) {
+      console.error('Error saving FAQ:', error);
+      message.error('Failed to save FAQ');
+    }
+  };
+
   const editFAQ = (faq) => {
     setEditingFAQ(faq);
     form.setFieldsValue(faq);
     setShowFAQModal(true);
   };
 
+  const deleteFAQ = async (id) => {
+    Modal.confirm({
+      title: 'Are you sure you want to delete this FAQ?',
+      okText: 'Yes',
+      okType: 'danger',
+      cancelText: 'No',
+      onOk: async () => {
+        try {
+          await axios.delete(`http://localhost:5000/api/admin/delete-faq/${id}`);
+          message.success('FAQ deleted');
+          fetchFaqs();
+        } catch (error) {
+          console.error('Error deleting FAQ:', error);
+          message.error('Failed to delete FAQ');
+        }
+      }
+    });
+  };
+
   return (
     <div className="report-container">
-      {/* Section: Issues */}
       <header className="welcome-header">
         <Title level={2} className="welcome-title">🔍 Reported Issues</Title>
-        <Text type="secondary" >
-        Access Complaints and FAQS section.
-        </Text>
+        <Text type="secondary">Access Complaints and FAQS section.</Text>
       </header>
+
       <Search
         placeholder="Search issues by title"
         onSearch={handleSearchIssues}
-        style={{ marginTop: 20,marginBottom: 20 }}
+        style={{ marginTop: 20, marginBottom: 20 }}
         allowClear
       />
+
       <List
         grid={{ gutter: 16, column: 2 }}
         dataSource={issues}
         renderItem={(issue) => (
           <List.Item>
             <Card
-              title={issue.title}
+              title={issue.errorTitle}
               extra={
-                <div>
-                  <div className="marks-buttons">
+                <div className="marks-buttons">
                   <Button
-                    type={issue.resolved ? 'default' : 'primary'}
+                    type="primary"
                     icon={<CheckCircleOutlined />}
-                    onClick={() => toggleResolved(issue.id)}
+                    onClick={() => resolveComplaint(issue._id)}
                   >
-                    {issue.resolved ? 'Mark Unresolved' : 'Mark Resolved'}
+                    Resolve
                   </Button>
-                  </div>
-                  <Button
-                    type="danger"
-                    icon={<DeleteOutlined />}
-                    onClick={() => deleteIssue(issue.id)}
-                    style={{ marginLeft: 8 }}
-                  />
                 </div>
               }
             >
-              <p>{issue.description}</p>
+              <p><strong>Email:</strong> {issue.email}</p>
+              <p>{issue.errorDetail}</p>
             </Card>
           </List.Item>
         )}
       />
 
-      {/* Section: FAQ */}
+      {/* FAQ Section */}
       <h2 className="section-title">📚 FAQ Management</h2>
       <div className="marks-buttons">
-      <Button
-        type="primary"
-        icon={<PlusOutlined />}
-        onClick={() => setShowFAQModal(true)}
-        style={{ marginBottom: 20 }}
-      >
-        Add FAQ
-      </Button>
+        <Button
+          type="primary"
+          icon={<PlusOutlined />}
+          onClick={() => {
+            setEditingFAQ(null);
+            setShowFAQModal(true);
+          }}
+          style={{ marginBottom: 20 }}
+        >
+          Add FAQ
+        </Button>
       </div>
+
       <Collapse>
         {faqs.map((faq) => (
           <Panel
             header={faq.question}
-            key={faq.id}
+            key={faq._id}
             extra={
               <>
                 <Button type="link" onClick={() => editFAQ(faq)}>
                   Edit
                 </Button>
-                <Button
-                  type="link"
-                  danger
-                  onClick={() => setFaqs((prev) => prev.filter((item) => item.id !== faq.id))}
-                >
+                <Button type="link" danger onClick={() => deleteFAQ(faq._id)}>
                   Delete
                 </Button>
               </>

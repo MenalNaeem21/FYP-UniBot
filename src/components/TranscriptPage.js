@@ -1,67 +1,120 @@
-import React from 'react';
-import { Button,Card, Table, Typography, Tag } from 'antd';
+// src/components/TranscriptPage.js
+import React, { useState, useEffect } from 'react';
+import { Button, Card, Table, Typography, Tag, message } from 'antd';
 import { MessageOutlined } from '@ant-design/icons';
+import axios from 'axios';
 import './TranscriptPage.css';
 
 const { Title, Text } = Typography;
 
-// Sample data for transcript
-const transcriptData = [
-  {
-    semester: 'Fall 2023',
-    gpa: 3.8,
-    cgpa: 3.7,
-    creditsEarned: 15,
-    courses: [
-      {
-        code: 'CS101',
-        name: 'Introduction to Programming',
-        grade: 'A',
-        credits: 3,
-      },
-      {
-        code: 'MATH201',
-        name: 'Calculus II',
-        grade: 'A-',
-        credits: 4,
-      },
-      {
-        code: 'ENG101',
-        name: 'English Composition',
-        grade: 'B+',
-        credits: 2,
-      },
-    ],
-  },
-  {
-    semester: 'Spring 2024',
-    gpa: 3.9,
-    cgpa: 3.75,
-    creditsEarned: 18,
-    courses: [
-      {
-        code: 'CS202',
-        name: 'Data Structures and Algorithm',
-        grade: 'A',
-        credits: 4,
-      },
-      {
-        code: 'PHYS101',
-        name: 'Physics I',
-        grade: 'B',
-        credits: 3,
-      },
-      {
-        code: 'HIST101',
-        name: 'World History',
-        grade: 'A-',
-        credits: 2,
-      },
-    ],
-  },
-];
-
 const TranscriptPage = () => {
+  const [transcriptData, setTranscriptData] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchTranscriptData();
+  }, []);
+
+  const fetchTranscriptData = async () => {
+    try {
+      const token = localStorage.getItem('studentToken');
+      const profileRes = await axios.get('http://localhost:5000/api/auth/studentprofile', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const student = profileRes.data;
+
+      const gradesRes = await axios.get(`http://localhost:5000/api/admin/student-grades/${student.rollNo}`);
+      const allGrades = gradesRes.data;
+
+      const coursesRes = await axios.get('http://localhost:5000/api/courses');
+      const allCourses = coursesRes.data;
+
+      // Group by semester
+      const semesterMap = new Map();
+
+      allGrades.forEach((gradeRecord) => {
+        const courseInfo = allCourses.find(course =>
+          course.id === gradeRecord.courseId &&
+          course.sections === gradeRecord.section
+        );
+
+        const semester = courseInfo?.semester || 'Unknown Semester';
+        const creditHours = courseInfo?.creditHours || 3; // default 3 credit hours if missing
+
+        if (!semesterMap.has(semester)) {
+          semesterMap.set(semester, {
+            semester,
+            courses: [],
+            totalCredits: 0,
+            totalGradePoints: 0,
+          });
+        }
+
+        const gradePoint = getGradePoint(gradeRecord.grade);
+        const semesterEntry = semesterMap.get(semester);
+
+        semesterEntry.courses.push({
+          code: gradeRecord.courseId,
+          name: gradeRecord.courseName,
+          grade: gradeRecord.grade,
+          gradeType: gradeRecord.gradeType || 'absolute',
+          credits: creditHours,
+        });
+
+        semesterEntry.totalCredits += creditHours;
+        semesterEntry.totalGradePoints += (gradePoint * creditHours);
+      });
+
+      const semestersArray = Array.from(semesterMap.values());
+
+            // Calculate GPA, CGPA
+      let totalGpaSum = 0;
+      let semesterCount = semestersArray.length;
+
+      semestersArray.forEach((sem) => {
+        sem.gpa = sem.totalCredits > 0 ? (sem.totalGradePoints / sem.totalCredits).toFixed(2) : '0.00';
+        totalGpaSum += parseFloat(sem.gpa);  // sum up all GPA values
+        sem.creditsEarned = sem.totalCredits;
+      });
+
+      // After all semesters processed
+      const finalCgpa = semesterCount > 0 ? (totalGpaSum / semesterCount).toFixed(2) : '0.00';
+
+      // Update CGPA inside each semester (optional if you want to show per card)
+      semestersArray.forEach((sem) => {
+        sem.cgpa = finalCgpa;
+      });
+
+      setTranscriptData(semestersArray);
+
+      // 🔥 Save GPA and CGPA back to student profile
+      await axios.put(`http://localhost:5000/api/admin/update-student-gpa/${student.rollNo}`, {
+        cgpa: finalCgpa,
+        gpas: semestersArray.map(s => ({
+          semester: s.semester,
+          gpa: s.gpa,
+        })),
+      });
+
+
+    } catch (error) {
+      console.error('Error loading transcript data:', error);
+      message.error('Failed to load transcript data.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getGradePoint = (grade) => {
+    const gradeMap = {
+      'A+': 4.0, 'A': 4.0, 'A-': 3.67,
+      'B+': 3.33, 'B': 3.0, 'B-': 2.67,
+      'C+': 2.33, 'C': 2.0, 'C-': 1.67,
+      'D+': 1.33, 'D': 1.0, 'F': 0.0,
+    };
+    return gradeMap[grade] ?? 0.0;
+  };
+
   const courseColumns = [
     {
       title: 'Course Code',
@@ -81,23 +134,20 @@ const TranscriptPage = () => {
       render: (grade) => {
         let color = '';
         switch (grade) {
-          case 'A':
-            color = 'green';
-            break;
-          case 'A-':
-            color = 'cyan';
-            break;
-          case 'B+':
-            color = 'blue';
-            break;
-          case 'B':
-            color = 'orange';
-            break;
-          default:
-            color = 'red';
+          case 'A': color = 'green'; break;
+          case 'A-': color = 'cyan'; break;
+          case 'B+': color = 'blue'; break;
+          case 'B': color = 'orange'; break;
+          default: color = 'red';
         }
         return <Tag color={color}>{grade}</Tag>;
       },
+    },
+    {
+      title: 'Grade Type',
+      dataIndex: 'gradeType',
+      key: 'gradeType',
+      render: (type) => <Tag color={type === 'absolute' ? 'purple' : 'volcano'}>{type}</Tag>,
     },
     {
       title: 'Credits',
@@ -105,6 +155,8 @@ const TranscriptPage = () => {
       key: 'credits',
     },
   ];
+
+  if (loading) return <div>Loading transcript...</div>;
 
   return (
     <div className="transcript-page">
@@ -134,12 +186,13 @@ const TranscriptPage = () => {
             <Table
               dataSource={semester.courses}
               columns={courseColumns}
-              rowKey="code"
+              rowKey={(record) => record.code + record.name}
               pagination={false}
             />
           </Card>
         ))}
       </main>
+
       <Button
         type="primary"
         shape="circle"

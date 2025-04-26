@@ -1,22 +1,50 @@
-import React from 'react';
-import { Card, Form, Input, Button, Typography, List, Divider } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Card, Form, Input, Button, Typography, List, message } from 'antd';
 import { MessageOutlined } from '@ant-design/icons';
-import './Treport.css';
+import axios from 'axios';
+import './Error.css'; // (You can rename CSS file to Terror.css if you want)
 
 const { Title, Paragraph } = Typography;
 const { TextArea } = Input;
 
-const Treport = () => {
-  const onFinish = (values) => {
-    console.log('Submitted Report:', values);
-    // Add your API call here
+const Terror = () => {
+  const [faqItems, setFaqItems] = useState([]);
+
+  useEffect(() => {
+    fetchFaqs();
+  }, []);
+
+  const fetchFaqs = async () => {
+    try {
+      const res = await axios.get('http://localhost:5000/api/admin/all-faqs');
+      setFaqItems(res.data);
+    } catch (error) {
+      console.error('Error fetching FAQs:', error);
+      message.error('Failed to load FAQs');
+    }
   };
 
-  const faqItems = [
-    { question: 'How can I reset my password?', answer: 'You can reset your password from the profile page.' },
-    { question: 'What should I do if I find incorrect data?', answer: 'Use this form to report incorrect data.' },
-    { question: 'How long does it take to resolve a report?', answer: 'Reports are usually resolved within 3-5 business days.' },
-  ];
+  const onFinish = async (values) => {
+    try {
+      const token = localStorage.getItem('teacherToken');  // ✅ Teacher token
+      const profileRes = await axios.get('http://localhost:5000/api/auth/profile', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const teacher = profileRes.data;
+
+      await axios.post('http://localhost:5000/api/admin/submit-complaint', {
+        email: teacher.email, // ✅ Teacher email
+        errorTitle: values.title,
+        errorDetail: values.description,
+      });
+
+      message.success('Complaint submitted successfully!');
+    } catch (error) {
+      console.error('Error submitting complaint:', error);
+      message.error('Failed to submit complaint.');
+    }
+  };
 
   return (
     <div className="error-container">
@@ -24,11 +52,7 @@ const Treport = () => {
         {/* Report Form */}
         <Card className="error-card">
           <Title level={3} className="error-title">Report an Issue</Title>
-          <Form
-            layout="vertical"
-            onFinish={onFinish}
-            className="error-form"
-          >
+          <Form layout="vertical" onFinish={onFinish} className="error-form">
             <Form.Item
               label="Title"
               name="title"
@@ -61,6 +85,12 @@ const Treport = () => {
           <List
             itemLayout="vertical"
             dataSource={faqItems}
+            pagination={{
+              pageSize: 4,
+              size: 'small',
+              align: 'center',
+              showSizeChanger: false,
+            }}
             renderItem={(item) => (
               <List.Item>
                 <Paragraph strong>{item.question}</Paragraph>
@@ -97,4 +127,4 @@ const Treport = () => {
   );
 };
 
-export default Treport;
+export default Terror;

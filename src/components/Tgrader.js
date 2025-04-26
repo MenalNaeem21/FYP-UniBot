@@ -90,9 +90,9 @@ const Tgrader = () => {
     if (!students.length) {
       return message.warning('No students found.');
     }
-
+  
     let gradedStudents = [];
-
+  
     if (gradingMethod === 'absolute') {
       gradedStudents = students.map(student => {
         const gradeObj = gradingScale.find(scale => student.weightedScore >= scale.min) || { grade: 'F' };
@@ -102,10 +102,10 @@ const Tgrader = () => {
       const scores = students.map(s => Number(s.weightedScore));
       const mean = scores.reduce((sum, val) => sum + val, 0) / scores.length;
       const stdDev = Math.sqrt(scores.reduce((sum, val) => sum + (val - mean) ** 2, 0) / scores.length);
-
+  
       gradedStudents = students.map(student => {
         const zScore = (student.weightedScore - mean) / stdDev;
-
+  
         let grade = 'F';
         if (zScore >= 1.0) grade = 'A+';
         else if (zScore >= 0.5) grade = 'A';
@@ -115,15 +115,15 @@ const Tgrader = () => {
         else if (zScore >= -1.5) grade = 'C';
         else if (zScore >= -2.0) grade = 'D';
         else grade = 'F';
-
+  
         return { ...student, grade, gpa: gradeToGpa[grade] || 0 };
       });
     }
-
+  
     setStudents(gradedStudents);
     calculateGradeDistribution(gradedStudents);
-
-    // Update grades and GPA to DB
+  
+    // ✅ Update grades and GPA to DB and send gradeType
     await Promise.all(gradedStudents.map(async (student) => {
       await axios.post('http://localhost:5000/api/admin/student-grades', {
         rollNo: student.rollNo,
@@ -133,12 +133,14 @@ const Tgrader = () => {
         section: selectedCourse.section,
         weightedScore: student.weightedScore,
         grade: student.grade,
-        gpa: student.gpa
+        gpa: student.gpa,
+        gradeType: gradingMethod,  // ✅ Important line added!
       });
     }));
-
+  
     message.success('Grades generated and saved successfully!');
   };
+  
 
   const calculateGradeDistribution = (gradedStudents) => {
     let distribution = {};

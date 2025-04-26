@@ -5,6 +5,8 @@ const Course = require('../models/Course');
 const Attendance = require("../models/attendance");
 const Marks = require('../models/Marks');
 const StudentGrade = require('../models/StudentGrade');
+const Faq = require('../models/Faq');
+const Complaint = require('../models/Complaint');
 const jwt = require("jsonwebtoken");
 
 const router = express.Router();
@@ -607,6 +609,119 @@ router.get('/student-grades/:rollNo', async (req, res) => {
 
 
 
+// Update GPA and CGPA for a student
+router.put('/update-student-gpa/:rollNo', async (req, res) => {
+  try {
+    const { rollNo } = req.params;
+    const { cgpa, gpas } = req.body; // gpas is array, cgpa is string
 
+    const student = await Student.findOne({ rollNo });
+    if (!student) {
+      return res.status(404).json({ message: 'Student not found' });
+    }
+
+    student.gpas = gpas;   // Update semester GPA list
+    student.cgpa = cgpa;   // Update overall CGPA
+    await student.save();
+
+    res.status(200).json({ message: 'GPA and CGPA updated successfully!' });
+  } catch (error) {
+    console.error('Error updating student GPA/CGPA:', error);
+    res.status(500).json({ message: 'Failed to update GPA/CGPA.' });
+  }
+});
+
+// 📌 Add a new FAQ
+router.post('/add-faq', async (req, res) => {
+  try {
+    const { question, answer } = req.body;
+
+    const faq = new Faq({ question, answer });
+    await faq.save();
+
+    res.status(201).json({ message: 'FAQ added successfully' });
+  } catch (error) {
+    console.error('Error adding FAQ:', error);
+    res.status(500).json({ message: 'Failed to add FAQ' });
+  }
+});
+
+// 📌 Fetch all FAQs
+router.get('/all-faqs', async (req, res) => {
+  try {
+    const faqs = await Faq.find().sort({ createdAt: -1 });
+    res.status(200).json(faqs);
+  } catch (error) {
+    console.error('Error fetching FAQs:', error);
+    res.status(500).json({ message: 'Failed to fetch FAQs' });
+  }
+});
+
+// 📌 Submit a complaint
+router.post('/submit-complaint', async (req, res) => {
+  try {
+    const { email, errorTitle, errorDetail } = req.body;
+
+    const complaint = new Complaint({ email, errorTitle, errorDetail });
+    await complaint.save();
+
+    res.status(201).json({ message: 'Complaint submitted successfully' });
+  } catch (error) {
+    console.error('Error submitting complaint:', error);
+    res.status(500).json({ message: 'Failed to submit complaint' });
+  }
+});
+
+// 📌 Fetch all complaints
+router.get('/all-complaints', async (req, res) => {
+  try {
+    const complaints = await Complaint.find().sort({ createdAt: -1 });
+    res.status(200).json(complaints);
+  } catch (error) {
+    console.error('Error fetching complaints:', error);
+    res.status(500).json({ message: 'Failed to fetch complaints' });
+  }
+});
+
+// 📌 Delete a complaint (after resolving)
+router.delete('/delete-complaint/:id', async (req, res) => {
+  try {
+    await Complaint.findByIdAndDelete(req.params.id);
+    res.status(200).json({ message: 'Complaint deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting complaint:', error);
+    res.status(500).json({ message: 'Failed to delete complaint' });
+  }
+});
+
+// 📌 Delete a FAQ
+router.delete('/delete-faq/:id', async (req, res) => {
+  try {
+    await Faq.findByIdAndDelete(req.params.id);
+    res.status(200).json({ message: 'FAQ deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting FAQ:', error);
+    res.status(500).json({ message: 'Failed to delete FAQ' });
+  }
+});
+
+// 📌 Update/Edit an FAQ (optional, if you want clean editing instead of delete-and-readd)
+router.put('/edit-faq/:id', async (req, res) => {
+  try {
+    const { question, answer } = req.body;
+    const updatedFaq = await Faq.findByIdAndUpdate(
+      req.params.id,
+      { question, answer },
+      { new: true }
+    );
+    if (!updatedFaq) {
+      return res.status(404).json({ message: 'FAQ not found' });
+    }
+    res.status(200).json({ message: 'FAQ updated successfully', updatedFaq });
+  } catch (error) {
+    console.error('Error updating FAQ:', error);
+    res.status(500).json({ message: 'Failed to update FAQ' });
+  }
+});
 
 module.exports = router;

@@ -30,7 +30,16 @@ const studentSchema = new mongoose.Schema({
       section: String,
     }
   ],
-  
+  gpas: [ //ADD - List of semester GPAs
+    {
+      semester: String,  // e.g., "Fall 2023"
+      gpa: String,       // e.g., "3.75"
+    }
+  ],
+  cgpa: { // ADD - Overall CGPA
+    type: String,
+    default: "0.00"
+  },
   
 });
 
