@@ -10,6 +10,7 @@ const marksSchema = new mongoose.Schema({
   },
   specificType: String, // e.g., Quiz 1, Assignment 2
   totalMarks: Number,
+  weightage: Number,  // Add this to each record
   instructor: {
     id: String,
     name: String
