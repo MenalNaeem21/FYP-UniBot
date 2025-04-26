@@ -285,44 +285,45 @@ router.post('/registercourse', async (req, res) => {
     }
   });
 
-  // REGISTER COURSE
-  router.post("/register", async (req, res) => {
-    try {
-      const { courseId, section, studentEmail, studentRollNo } = req.body;
-  
-      const course = await Course.findOne({ id: courseId, sections: section });
-      if (!course) return res.status(404).json({ message: "Course not found" });
-  
-      const student = await Student.findOne({ email: studentEmail, rollNo: studentRollNo });
-      if (!student) return res.status(404).json({ message: "Student not found" });
-  
-      const alreadyRegistered = student.registeredCourses.some(
-        (c) => c.id === courseId && c.section === section
-      );
-      const alreadyWaitlisted = student.waitlistedCourses.some(
-        (c) => c.id === courseId && c.section === section
-      );
-  
-      if (alreadyRegistered || alreadyWaitlisted) {
-        return res.status(400).json({ message: "Already registered or waitlisted" });
-      }
-  
-      if (course.seatAvailability > 0) {
-        course.seatAvailability -= 1;
-        student.registeredCourses.push({ id: courseId, section });
-        await course.save();
-        await student.save();
-        return res.status(200).json({ message: "Registered successfully", status: "registered" });
-      } else {
-        student.waitlistedCourses.push({ id: courseId, section });
-        await student.save();
-        return res.status(200).json({ message: "Added to waitlist", status: "waitlisted" });
-      }
-    } catch (error) {
-      console.error("Registration error:", error);
-      res.status(500).json({ message: "Server error during registration" });
+// REGISTER COURSE
+router.post("/register", async (req, res) => {
+  try {
+    const { courseId, section, semester, studentEmail, studentRollNo } = req.body; // 🛠️ include semester from request
+
+    const course = await Course.findOne({ id: courseId, sections: section, semester: semester });
+    if (!course) return res.status(404).json({ message: "Course not found" });
+
+    const student = await Student.findOne({ email: studentEmail, rollNo: studentRollNo });
+    if (!student) return res.status(404).json({ message: "Student not found" });
+
+    const alreadyRegistered = student.registeredCourses.some(
+      (c) => c.id === courseId && c.section === section && c.semester === semester // 🛠️ also match semester
+    );
+    const alreadyWaitlisted = student.waitlistedCourses.some(
+      (c) => c.id === courseId && c.section === section && c.semester === semester
+    );
+
+    if (alreadyRegistered || alreadyWaitlisted) {
+      return res.status(400).json({ message: "Already registered or waitlisted" });
     }
-  });
+
+    if (course.seatAvailability > 0) {
+      course.seatAvailability -= 1;
+      student.registeredCourses.push({ id: courseId, section, semester }); // 🛠️ save semester here
+      await course.save();
+      await student.save();
+      return res.status(200).json({ message: "Registered successfully", status: "registered" });
+    } else {
+      student.waitlistedCourses.push({ id: courseId, section, semester }); // 🛠️ save semester here too
+      await student.save();
+      return res.status(200).json({ message: "Added to waitlist", status: "waitlisted" });
+    }
+  } catch (error) {
+    console.error("Registration error:", error);
+    res.status(500).json({ message: "Server error during registration" });
+  }
+});
+
   
   // DROP COURSE
   router.post("/drop", async (req, res) => {
@@ -563,6 +564,44 @@ router.delete('/marks/:id', async (req, res) => {
   } catch (error) {
     console.error('Error deleting marks:', error);
     res.status(500).json({ message: 'Server error while deleting marks' });
+  }
+});
+
+// routes/admin.js
+router.get('/marks/student/:rollNo', async (req, res) => {
+  const rollNo = req.params.rollNo;
+  try {
+    const marks = await Marks.find({ "students.rollNo": rollNo });
+    res.json(marks);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error fetching marks" });
+  }
+});
+
+
+// GET ALL MARKS
+router.get('/marks/all', async (req, res) => {
+  try {
+    const marks = await Marks.find();
+    res.status(200).json(marks);
+  } catch (error) {
+    console.error('Error fetching marks:', error);
+    res.status(500).json({ message: 'Server error while fetching marks' });
+  }
+});
+
+
+
+// GET student grades by roll number
+router.get('/student-grades/:rollNo', async (req, res) => {
+  try {
+    const { rollNo } = req.params;
+    const grades = await StudentGrade.find({ rollNo });
+    res.status(200).json(grades);
+  } catch (error) {
+    console.error('Error fetching student grades:', error);
+    res.status(500).json({ message: 'Failed to fetch student grades.' });
   }
 });
 

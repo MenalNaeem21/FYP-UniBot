@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Button, Modal, Form, Input, Select, DatePicker, Typography, Card, message } from 'antd';
 import { EditOutlined, DeleteOutlined, EyeOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons';
+import moment from 'moment';
 import './Astudent.css';
 import dayjs from 'dayjs';
 import axios from 'axios';
@@ -128,53 +129,200 @@ const Astudent = () => {
         }}
         onOk={() => form.submit()}
       >
-        <Form form={form} layout="vertical" onFinish={handleSaveStudent}>
-          <Form.Item name="name" label="Name" rules={[{ required: true }]}>
-            <Input />
-          </Form.Item>
-          <Form.Item name="rollNo" label="Roll No" rules={[{ required: true }]}>
-            <Input />
-          </Form.Item>
-          <Form.Item name="degreeProgram" label="Degree Program" rules={[{ required: true }]}>
-            <Input />
-          </Form.Item>
-          <Form.Item name="email" label="Email" rules={[{ required: true }]}>
-            <Input />
-          </Form.Item>
-          <Form.Item name="password" label="Password" rules={[{ required: true }]}>
-            <Input />
-          </Form.Item>
-          <Form.Item name="gender" label="Gender" rules={[{ required: true }]}>
-            <Select>
-              <Option value="Male">Male</Option>
-              <Option value="Female">Female</Option>
-            </Select>
-          </Form.Item>
-          <Form.Item name="dob" label="Date of Birth">
-            <DatePicker style={{ width: '100%' }} />
-          </Form.Item>
-          <Form.Item name="mobile" label="Mobile">
-            <Input />
-          </Form.Item>
-          <Form.Item name="cnic" label="CNIC">
-            <Input />
-          </Form.Item>
-          <Form.Item name="campus" label="Campus">
-            <Input />
-          </Form.Item>
-          <Form.Item name="batch" label="Batch">
-            <Input />
-          </Form.Item>
-          <Form.Item name="bloodGroup" label="Blood Group">
-            <Input />
-          </Form.Item>
-          <Form.Item name="address" label="Address">
-            <Input.TextArea />
-          </Form.Item>
-          <Form.Item name="familyInfo" label="Family Info">
-            <Input.TextArea />
-          </Form.Item>
-        </Form>
+            <Form form={form} layout="vertical" onFinish={handleSaveStudent}>
+      <Form.Item name="name" label="Name" rules={[{ required: true, message: 'Name is required' }]}>
+        <Input />
+      </Form.Item>
+
+      <Form.Item
+        name="rollNo"
+        label="Roll No"
+        rules={[
+          { required: true, message: 'Roll No is required' },
+          { pattern: /^[0-9]{2}[A-Z]-[0-9]{4}$/, message: 'Format should be like 12L-3456' },
+        ]}
+      >
+        <Input />
+      </Form.Item>
+
+      <Form.Item
+        name="degreeProgram"
+        label="Degree Program"
+        rules={[{ required: true, message: 'Degree Program is required' }]}
+      >
+        <Select
+          showSearch
+          placeholder="Select or enter manually"
+          optionFilterProp="children"
+          dropdownRender={menu => (
+            <>
+              {menu}
+              <Form.Item style={{ margin: 0, padding: '8px' }}>
+                <Input
+                  placeholder="Custom Program"
+                  onPressEnter={(e) => {
+                    form.setFieldsValue({ degreeProgram: e.target.value });
+                  }}
+                />
+              </Form.Item>
+            </>
+          )}
+        >
+        <Option value="BBA">BBA</Option>
+        <Option value="BS(AF)">BS(AF)</Option>
+        <Option value="BS(AI)">BS(AI)</Option>
+        <Option value="BS(BA)">BS(BA)</Option>
+        <Option value="BS(CE)">BS(CE)</Option>
+        <Option value="BS(CompEng)">BS(CompEng)</Option>
+        <Option value="BS(CS)">BS(CS)</Option>
+        <Option value="BS(CyS)">BS(CyS)</Option>
+        <Option value="BS(DS)">BS(DS)</Option>
+        <Option value="BS(EE)">BS(EE)</Option>
+        <Option value="BS(FinTech)">BS(FinTech)</Option>
+        <Option value="BS(SE)">BS(SE)</Option>
+
+        <Option value="MBA">MBA</Option>
+        <Option value="MS(AL)">MS(AL)</Option>
+        <Option value="MS(AI)">MS(AI)</Option>
+        <Option value="MS(BA)">MS(BA)</Option>
+        <Option value="MS(CE)">MS(CE)</Option>
+        <Option value="MS(CS)">MS(CS)</Option>
+        <Option value="MS(CyS)">MS(CyS)</Option>
+        <Option value="MS(DS)">MS(DS)</Option>
+        <Option value="MS(EE)">MS(EE)</Option>
+        <Option value="MS(Math)">MS(Math)</Option>
+        <Option value="MS(SE)">MS(SE)</Option>
+        <Option value="MS(SPM)">MS(SPM)</Option>
+
+        <Option value="PhD(CE)">PhD(CE)</Option>
+        <Option value="PhD(CS)">PhD(CS)</Option>
+        <Option value="PhD(EE)">PhD(EE)</Option>
+        <Option value="PhD(MS)">PhD(MS)</Option>
+        <Option value="PhD(Math)">PhD(Math)</Option>
+        <Option value="PhD(SE)">PhD(SE)</Option>
+
+
+        </Select>
+      </Form.Item>
+
+      <Form.Item
+        name="email"
+        label="Email"
+        rules={[
+          { required: true, message: 'Email is required' },
+          { type: 'email', message: 'Enter a valid email' },
+          { pattern: /^l\d{6}@gmail\.com$/, message: 'Email must be like l123456@gmail.com' },
+        ]}
+      >
+        <Input />
+      </Form.Item>
+      <Form.Item name="password" label="Password" rules={[{ required: true }]}>
+        <Input />
+      </Form.Item>
+
+      <Form.Item name="gender" label="Gender" rules={[{ required: true }]}>
+        <Select>
+          <Option value="Male">Male</Option>
+          <Option value="Female">Female</Option>
+        </Select>
+      </Form.Item>
+
+      <Form.Item
+  name="dob"
+  label="Date of Birth"
+  rules={[
+    { required: true, message: 'Date of Birth is required' },
+    {
+      validator: (_, value) => {
+        if (!value) {
+          return Promise.reject(new Error('Date of Birth is required'));
+        }
+
+        const today = new Date();
+        const dob = new Date(value.$d); // ⚡ because Ant Design DatePicker gives Moment-like object
+        let age = today.getFullYear() - dob.getFullYear();
+        const monthDiff = today.getMonth() - dob.getMonth();
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+          age--; // birthday not reached yet
+        }
+
+        if (age < 18) {
+          return Promise.reject(new Error('Student must be at least 18 years old'));
+        }
+        return Promise.resolve();
+      },
+    },
+  ]}
+>
+  <DatePicker style={{ width: '100%' }} />
+</Form.Item>
+
+
+
+      <Form.Item
+        name="mobile"
+        label="Mobile"
+        rules={[
+          { required: true, message: 'Mobile number is required' },
+          { pattern: /^03[0-9]{9}$/, message: 'Mobile must be like 03123456789 (11 digits)' },
+        ]}
+      >
+        <Input />
+      </Form.Item>
+
+      <Form.Item
+        name="cnic"
+        label="CNIC"
+        rules={[
+          { required: true, message: 'CNIC is required' },
+          { pattern: /^[0-9]{5}-[0-9]{7}-[0-9]$/, message: 'Format must be 35202-1234567-8' },
+        ]}
+      >
+        <Input />
+      </Form.Item>
+
+      <Form.Item
+        name="campus"
+        label="Campus"
+        rules={[{ required: true, message: 'Campus is required' }]}
+      >
+        <Select placeholder="Select Campus">
+          <Option value="Lahore">Lahore</Option>
+          <Option value="Islamabad">Islamabad</Option>
+          <Option value="Faisalabad">Faisalabad</Option>
+        </Select>
+      </Form.Item>
+
+      <Form.Item
+        name="batch"
+        label="Batch"
+        rules={[
+          { required: true, message: 'Batch is required' },
+          { pattern: /^[0-9]{4}$/, message: 'Batch must be 4 digits (e.g., 2025)' },
+        ]}
+      >
+        <Input />
+      </Form.Item>
+
+      <Form.Item
+        name="bloodGroup"
+        label="Blood Group"
+      >
+        <Select placeholder="Select Blood Group">
+          {['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'].map(bg => (
+            <Option key={bg} value={bg}>{bg}</Option>
+          ))}
+        </Select>
+      </Form.Item>
+
+      <Form.Item name="address" label="Address">
+        <Input.TextArea />
+      </Form.Item>
+
+      <Form.Item name="familyInfo" label="Family Info">
+        <Input.TextArea />
+      </Form.Item>
+    </Form>
       </Modal>
       
       <Modal

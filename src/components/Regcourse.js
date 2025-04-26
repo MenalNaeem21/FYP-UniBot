@@ -6,6 +6,7 @@ import {
   Typography,
   Tag,
   Space,
+  Select,
   message,
 } from 'antd';
 import {
@@ -18,6 +19,7 @@ import axios from 'axios';
 import './Regcourse.css';
 
 const { Title, Text } = Typography;
+const { Option } = Select;
 
 const Regcourse = () => {
   const [availableCourses, setAvailableCourses] = useState([]);
@@ -25,8 +27,8 @@ const Regcourse = () => {
   const [waitlist, setWaitlist] = useState([]);
   const [studentData, setStudentData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [selectedSemester, setSelectedSemester] = useState('Fall'); // Default semester
 
-  // Fetch student data from token
   useEffect(() => {
     const fetchStudentData = async () => {
       try {
@@ -46,7 +48,6 @@ const Regcourse = () => {
     fetchStudentData();
   }, []);
 
-  // Fetch available courses
   const fetchCourses = useCallback(async () => {
     try {
       const response = await axios.get('http://localhost:5000/api/courses');
@@ -56,7 +57,6 @@ const Regcourse = () => {
     }
   }, []);
 
-  // Fetch student-specific registered/waitlisted courses
   const fetchStudentCourses = useCallback(async () => {
     if (!studentData?.email || !studentData?.rollNo) return;
 
@@ -86,6 +86,7 @@ const Regcourse = () => {
       const res = await axios.post('http://localhost:5000/api/admin/register', {
         courseId: course.id,
         section: course.sections,
+        semester: course.semester, // 📌 Send semester here!
         studentEmail: studentData.email,
         studentRollNo: studentData.rollNo,
       });
@@ -98,13 +99,12 @@ const Regcourse = () => {
         message.success(`${course.name} registered successfully!`);
       }
   
-      fetchCourses(); // refresh course list
+      fetchCourses(); 
     } catch (err) {
       console.error("Frontend registration error:", err);
       message.error('Failed to register for course');
     }
   };
-  
 
   const handleDropCourse = async (course) => {
     try {
@@ -143,6 +143,11 @@ const Regcourse = () => {
       title: 'Professor',
       dataIndex: ['instructor', 'name'],
       key: 'professor',
+    },
+    {
+      title: 'Semester',
+      dataIndex: 'semester',
+      key: 'semester',
     },
     {
       title: 'Prerequisites',
@@ -211,6 +216,11 @@ const Regcourse = () => {
       key: 'section',
     },
     {
+      title: 'Semester',
+      dataIndex: 'semester',
+      key: 'semester',
+    },
+    {
       title: 'Actions',
       key: 'actions',
       render: (_, record) => (
@@ -228,19 +238,34 @@ const Regcourse = () => {
 
   if (loading) return null;
 
+  const filteredCourses = availableCourses.filter(c => c.semester === selectedSemester);
+
   return (
     <div className="reg-container">
       <header className="welcome-header">
         <Title level={2} className="welcome-title">🎓 Course Registration</Title>
         <Text type="secondary">
-          Register courses and access waitlist.
+          Register courses by semester.
         </Text>
       </header>
 
       <main className="reg-content">
         <Card title="Available Courses" className="reg-card">
+          <Space style={{ marginBottom: 16 }}>
+            <Text strong>Select Semester: </Text>
+            <Select
+              value={selectedSemester}
+              onChange={(value) => setSelectedSemester(value)}
+              style={{ width: 150 }}
+            >
+              <Option value="Fall">Fall</Option>
+              <Option value="Spring">Spring</Option>
+              <Option value="Summer">Summer</Option>
+            </Select>
+          </Space>
+
           <Table
-            dataSource={availableCourses}
+            dataSource={filteredCourses}
             columns={courseColumns}
             rowKey="_id"
             pagination={{ pageSize: 5 }}

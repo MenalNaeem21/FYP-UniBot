@@ -1,82 +1,179 @@
-import React, { useState } from 'react';
-import { Card, Typography, Button, Table, Modal, Statistic } from 'antd';
+// src/components/Marks.js
+import React, { useState, useEffect } from 'react';
+import { Card, Typography, Button, Table, Modal, message } from 'antd';
 import { FileTextOutlined } from '@ant-design/icons';
+import axios from 'axios';
 import './Marks.css';
 
 const { Title, Text } = Typography;
 
 const Marks = () => {
+  const [courses, setCourses] = useState([]);
+  const [selectedCourse, setSelectedCourse] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [studentGrades, setStudentGrades] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const courses = [
-    {
-      key: '1',
-      course: 'CS101 - Intro to Programming',
-      instructor: 'Dr. John Doe',
-      quizzes: [
-        { name: 'Quiz 1', marks: 8, weightage: '10%' },
-        { name: 'Quiz 2', marks: 7, weightage: '10%' },
-      ],
-      assignments: [
-        { name: 'Assignment 1', marks: 15, weightage: '15%' },
-      ],
-      mid: { name: 'Midterm Exam', marks: 35, weightage: '30%' },
-      final: { name: 'Final Exam', marks: 50, weightage: '45%' },
-      GrandTotal: {name:'Grand Total',marks: 66,weightage: ''},
-    },
-    {
-      key: '2',
-      course: 'MATH201 - Calculus II',
-      instructor: 'Prof. Jane Smith',
-      quizzes: [
-        { name: 'Quiz 1', marks: 9, weightage: '10%' },
-        { name: 'Quiz 2', marks: 8, weightage: '10%' },
-      ],
-      assignments: [
-        { name: 'Assignment 1', marks: 18, weightage: '15%' },
-      ],
-      mid: { name: 'Midterm Exam', marks: 40, weightage: '30%' },
-      final: { name: 'Final Exam', marks: 55, weightage: '45%' },
-      GrandTotal: {name:'Grand Total',marks: 88,weightage: ''},
-    },
-  ];
+  useEffect(() => {
+    fetchStudentMarks();
+  }, []);
 
-  const showCategoryMarks = (category) => {
+  const fetchStudentMarks = async () => {
+    try {
+      const token = localStorage.getItem('studentToken');
+      const profileRes = await axios.get('http://localhost:5000/api/auth/studentprofile', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const student = profileRes.data;
+
+      const marksRes = await axios.get('http://localhost:5000/api/admin/marks/all');
+      const allMarks = marksRes.data;
+
+      const gradesRes = await axios.get(`http://localhost:5000/api/admin/student-grades/${student.rollNo}`);
+      const grades = gradesRes.data;
+      setStudentGrades(grades);
+  
+      const courseMap = new Map();
+  
+      allMarks.forEach((record) => {
+        record.students.forEach((studentRecord) => {
+          if (studentRecord.rollNo === student.rollNo) {
+            const key = `${record.courseId}-${record.section}`;
+            if (!courseMap.has(key)) {
+              const matchedGrade = grades.find(
+                (g) => g.courseId === record.courseId && g.section === record.section
+              );
+  
+              courseMap.set(key, {
+                key,
+                courseId: record.courseId,
+                courseName: matchedGrade ? matchedGrade.courseName : 'N/A',
+                section: record.section,
+                instructor: record.instructor?.name || 'N/A',
+                quizzes: [],
+                assignments: [],
+                mid: null,
+                sessional2: null,
+                project: null,
+                final: null,
+                weightages: {
+                  quizzes: 0,
+                  assignments: 0,
+                  others: 0,
+                }
+              });
+            }
+            const courseEntry = courseMap.get(key);
+
+            if (record.type === 'Quiz') {
+              courseEntry.quizzes.push({
+                name: record.specificType,
+                marks: studentRecord.marks,
+                totalMarks: record.totalMarks,
+                weightage: `${record.weightage}%`,
+              });
+              courseEntry.weightages.quizzes = Number(record.weightage);  // Only first quiz weightage taken
+            } else if (record.type === 'Assignment') {
+              courseEntry.assignments.push({
+                name: record.specificType,
+                marks: studentRecord.marks,
+                totalMarks: record.totalMarks,
+                weightage: `${record.weightage}%`,
+              });
+              courseEntry.weightages.assignments = Number(record.weightage);  // Only first assignment weightage taken
+            } else if (record.type === 'Sessional 1') {
+              courseEntry.mid = {
+                name: record.type,
+                marks: studentRecord.marks,
+                totalMarks: record.totalMarks,
+                weightage: `${record.weightage}%`,
+              };
+              courseEntry.weightages.others += Number(record.weightage);
+            } else if (record.type === 'Sessional 2') {
+              courseEntry.sessional2 = {
+                name: record.type,
+                marks: studentRecord.marks,
+                totalMarks: record.totalMarks,
+                weightage: `${record.weightage}%`,
+              };
+              courseEntry.weightages.others += Number(record.weightage);
+            } else if (record.type === 'Project') {
+              courseEntry.project = {
+                name: record.type,
+                marks: studentRecord.marks,
+                totalMarks: record.totalMarks,
+                weightage: `${record.weightage}%`,
+              };
+              courseEntry.weightages.others += Number(record.weightage);
+            } else if (record.type === 'Final') {
+              courseEntry.final = {
+                name: record.type,
+                marks: studentRecord.marks,
+                totalMarks: record.totalMarks,
+                weightage: `${record.weightage}%`,
+              };
+              courseEntry.weightages.others += Number(record.weightage);
+            }
+          }
+        });
+      });
+
+      setCourses(Array.from(courseMap.values()));
+    } catch (error) {
+      console.error('Error fetching student marks:', error);
+      message.error('Failed to load marks');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const showCategoryMarks = (course, category) => {
+    setSelectedCourse(course);
     setSelectedCategory(category);
     setIsModalOpen(true);
   };
 
-  const getCategoryMarks = (course) => {
-    if (!selectedCategory) return [];
-    return course[selectedCategory] instanceof Array
-      ? course[selectedCategory]
-      : [course[selectedCategory]];
-  };
+  const getCategoryMarks = () => {
+    if (!selectedCourse || !selectedCategory) return [];
 
-  const getTotalMarks = (course) => {
-    const data = getCategoryMarks(course);
-    const totalMarks = data.reduce((sum, item) => sum + item.marks, 0);
-    return totalMarks;
-  };
+    if (selectedCategory === 'quizzes') return selectedCourse.quizzes;
+    if (selectedCategory === 'assignments') return selectedCourse.assignments;
+    if (selectedCategory === 'mid') return selectedCourse.mid ? [selectedCourse.mid] : [];
+    if (selectedCategory === 'sessional2') return selectedCourse.sessional2 ? [selectedCourse.sessional2] : [];
+    if (selectedCategory === 'project') return selectedCourse.project ? [selectedCourse.project] : [];
+    if (selectedCategory === 'final') return selectedCourse.final ? [selectedCourse.final] : [];
 
-  const getClassAverage = (course) => {
-    const data = getCategoryMarks(course);
-    const totalMarks = data.reduce((sum, item) => sum + item.marks, 0);
-    const average = totalMarks / data.length;
-    return average;
+    if (selectedCategory === 'GrandTotal') {
+      const matched = studentGrades.find(g =>
+        g.courseId === selectedCourse.courseId && g.section === selectedCourse.section
+      );
+      const courseTotalWeightage =
+        selectedCourse.weightages.quizzes +
+        selectedCourse.weightages.assignments +
+        selectedCourse.weightages.others;
+      
+      return matched ? [{
+        name: 'Grand Total',
+        marks: matched.weightedScore,
+        totalMarks: courseTotalWeightage,
+        weightage: '100%'
+      }] : [];
+    }
+
+    return [];
   };
 
   const renderCategoryTable = () => {
-    const selectedCourse = courses[0]; // Show marks for the first course for simplicity
-    const data = getCategoryMarks(selectedCourse);
-
+    const data = getCategoryMarks();
+    if (!selectedCourse) return null; 
     return (
       <Table
         dataSource={data}
         columns={[
           { title: 'Name', dataIndex: 'name', key: 'name' },
-          { title: 'Marks', dataIndex: 'marks', key: 'marks' },
+          { title: 'Obtained Marks', dataIndex: 'marks', key: 'marks' },
+          { title: 'Total Marks', dataIndex: 'totalMarks', key: 'totalMarks' },
           { title: 'Weightage', dataIndex: 'weightage', key: 'weightage' },
         ]}
         pagination={false}
@@ -85,82 +182,38 @@ const Marks = () => {
     );
   };
 
+  if (loading) return <div>Loading marks...</div>;
+
   return (
     <div className="marks-page">
-      {/* Header */}
       <header className="welcome-header">
         <Title level={2} className="welcome-title">📑 Semester Marks Overview</Title>
         <Text type="secondary">
           Review your marks for each course.
         </Text>
       </header>
-      
-      
-      {/* Marks Table */}
+
       <main className="marks-content">
         {courses.map((course) => (
           <Card key={course.key} className="marks-card">
-            <Title level={4} className="course-title">{course.course}</Title>
+            <Title level={4} className="course-title">
+              {course.courseId} ({course.section}) — {course.courseName}
+            </Title>
             <Text type="secondary">Instructor: {course.instructor}</Text>
-            <div className="marks-buttons">
-              <Button
-                type="primary"
-                icon={<FileTextOutlined />}
-                onClick={() => showCategoryMarks('quizzes')}
-              >
-                Quizzes
-              </Button>
-              <Button
-                type="primary"
-                icon={<FileTextOutlined />}
-                onClick={() => showCategoryMarks('assignments')}
-              >
-                Assignments
-              </Button>
-              <Button
-                type="primary"
-                icon={<FileTextOutlined />}
-                onClick={() => showCategoryMarks('mid')}
-              >
-                Midterm
-              </Button>
-              <Button
-                type="primary"
-                icon={<FileTextOutlined />}
-                onClick={() => showCategoryMarks('final')}
-              >
-                Final Exam
-              </Button>
-              <Button
-                type="primary"
-                icon={<FileTextOutlined />}
-                onClick={() => showCategoryMarks('GrandTotal')}
-              >
-                Grand Total
-              </Button>
-            </div>
 
-            {/* Total Marks and Class Average */}
-            {selectedCategory && (
-              <div className="marks-summary">
-                <Statistic
-                  title="Total Marks"
-                  value={getTotalMarks(course)}
-                  suffix="/ 100"
-                />
-                <Statistic
-                  title="Class Average"
-                  value={getClassAverage(course)}
-                  precision={2}
-                  suffix=" %"
-                />
-              </div>
-            )}
+            <div className="marks-buttons">
+              <Button type="primary" icon={<FileTextOutlined />} onClick={() => showCategoryMarks(course, 'quizzes')}>Quizzes</Button>
+              <Button type="primary" icon={<FileTextOutlined />} onClick={() => showCategoryMarks(course, 'assignments')}>Assignments</Button>
+              <Button type="primary" icon={<FileTextOutlined />} onClick={() => showCategoryMarks(course, 'mid')}>Sessional 1</Button>
+              <Button type="primary" icon={<FileTextOutlined />} onClick={() => showCategoryMarks(course, 'sessional2')}>Sessional 2</Button>
+              <Button type="primary" icon={<FileTextOutlined />} onClick={() => showCategoryMarks(course, 'project')}>Project</Button>
+              <Button type="primary" icon={<FileTextOutlined />} onClick={() => showCategoryMarks(course, 'final')}>Final Exam</Button>
+              <Button type="primary" icon={<FileTextOutlined />} onClick={() => showCategoryMarks(course, 'GrandTotal')}>Grand Total</Button>
+            </div>
           </Card>
         ))}
       </main>
 
-      {/* Modal for Category Marks */}
       <Modal
         title={`Marks Details — ${selectedCategory?.toUpperCase()}`}
         open={isModalOpen}
