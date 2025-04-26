@@ -1,0 +1,27 @@
+{
+    "admissions": {
+      "offeredPrograms": "FAST-NU offers undergraduate and graduate programs in CS, EE, AI, and Business across all campuses.",
+      "admissionSchedule": "Admissions are typically announced twice a year. Deadlines are posted on the official site.",
+      "howToApply": "Applications are submitted online via the admissions portal. Follow the step-by-step guide available on the site.",
+      "feeStructure": "Fee details vary by program and campus. A full breakdown is available under the Admissions > Fee Structure section."
+    },
+    "students": {
+      "academicCalendar": "The academic calendar outlines semester dates, holidays, and exam schedules for all campuses.",
+      "codeOfConduct": "Students must adhere to ethical behavior, academic integrity, and disciplinary rules outlined by the university.",
+      "studentChapters": "Chapters like IEEE, ACM, and others operate actively with seminars, coding competitions, and workshops.",
+      "financialAid": "Scholarships and loans are offered based on merit and financial need. Applications are handled online."
+    },
+    "campuses": {
+      "lahore": "Located in Faisal Town, Lahore campus offers programs in CS, AI, Business, and Engineering. It hosts numerous research labs and societies.",
+      "islamabad": "Situated in H-11, the campus has a strong research and entrepreneurial culture with excellent infrastructure."
+    },
+    "services": {
+      "library": "Each campus has a central library with digital access, journals, and a research repository.",
+      "careerServices": "The Career Services Office helps with internships, resume reviews, and job placement support."
+    },
+    "executiveEducation": {
+      "fintechFCP": "Certificate in Fintech and Cryptocurrency covers blockchain fundamentals and DeFi concepts.",
+      "analyticsPAC": "Analytics and People Analytics certificate emphasizes data insights in business and HR contexts."
+    }
+  }
+  
