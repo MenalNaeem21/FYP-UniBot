@@ -31,18 +31,15 @@ async function askBot(userMessage) {
         return `🚫 No valid timetable entries found for "${courseName}".`;
       }
 
-      // Only map valid entries
-      const formattedTimetable = timetableEntries.map(entry => {
-        const course = entry["Course Name"];
-        const section = entry["Section"];
-        const day = entry["Day"];
-        const time = entry["Time"];
-        const room = entry["Room"];
+      const formattedTimetable = timetableEntries.map(entry => (
+        `📚 ${entry['Course Name']} (${entry.Section})
+📅 Day: ${entry.Day}
+🕑 Time: ${entry.Time}
+🏫 Room: ${entry.Room}
+👨‍🏫 Instructor: ${entry.Instructor}\n`
+      )).join("\n");
 
-        return `${course} (Section ${section}) on ${day} at ${time} in Room ${room}`;
-      }).join("\n");
-
-      return formattedTimetable;
+      return formattedTimetable; //  Only RETURN the message here
     }
 
     // 2. Academic info static

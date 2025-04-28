@@ -74,22 +74,17 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/timetable", timetableRoutes);
 
 // 🔹 Bot Route: To interact with the bot
-app.post("/api/bot/ask", async (req, res) => {
-  const { userMessage } = req.body;  // Extract userMessage from the request body
-  console.log("User message received:", userMessage); // Log the received message
-
+app.post('/api/bot/ask', async (req, res) => {
   try {
-    if (!userMessage || typeof userMessage !== 'string') {
-      throw new Error("Invalid message: userMessage is either missing or not a string.");
-    }
-
-    const botResponse = await askBot(userMessage);
-    res.json({ response: botResponse });
+    const { message: userMessage } = req.body;
+    const reply = await askBot(userMessage);
+    res.json({ reply }); 
   } catch (error) {
-    console.error("🚨 Bot error:", error.message);
-    res.status(500).json({ error: "Oops! Something went wrong while processing your request." });
+    console.error("🚨 Server error:", error);
+    res.status(500).json({ reply: "Sorry, server error!" });
   }
 });
+
 
 
 const PORT = process.env.PORT || 5000;
