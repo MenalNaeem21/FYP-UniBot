@@ -1,6 +1,22 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { Moon, Sun } from "lucide-react";
+
+const shortForms = {
+  ds: "data structures",
+  os: "operating systems",
+  ai: "artificial intelligence",
+  pdc: "parallel distributed computing",
+};
+
+function expandShortForms(text) {
+  let expanded = text;
+  for (const short in shortForms) {
+    const regex = new RegExp(`\\b${short}\\b`, 'gi');
+    expanded = expanded.replace(regex, shortForms[short]);
+  }
+  return expanded;
+}
 
 const ChatBot = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -14,12 +30,18 @@ const ChatBot = () => {
   const [conversationEnded, setConversationEnded] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [typingDots, setTypingDots] = useState(".");
-  const [awaitingEndDecision, setAwaitingEndDecision] = useState(false); // track user's decision
+  const [awaitingEndDecision, setAwaitingEndDecision] = useState(false);
+  const messagesEndRef = useRef(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
 
   const toggleChat = () => {
     setIsOpen(!isOpen);
     if (!isOpen) {
       setMessages([{ sender: "bot", text: "🤖 Hello! How may I help you today?" }]);
+      setConversationEnded(false); // Reset ended convo when reopening
     }
   };
 
@@ -29,26 +51,24 @@ const ChatBot = () => {
 
   const sendMessage = async () => {
     if (userInput.trim() === "") return;
-  
+
+    const expandedInput = expandShortForms(userInput.toLowerCase());
     const userMessage = { sender: "user", text: userInput };
     setMessages((prev) => [...prev, userMessage]);
-  
-    const lowerInput = userInput.toLowerCase();
-  
+
     if (conversationEnded) {
       setUserInput("");
       return;
     }
-  
-    // If waiting for "end conversation?" answer
+
     if (awaitingEndDecision) {
-      if (lowerInput.includes("yes")) {
+      if (expandedInput.includes("yes")) {
         setMessages((prev) => [
           ...prev,
           { sender: "bot", text: "👍 Thank you! Have a wonderful day! 🌟" },
         ]);
         setConversationEnded(true);
-      } else if (lowerInput.includes("no")) {
+      } else if (expandedInput.includes("no")) {
         setMessages((prev) => [
           ...prev,
           { sender: "bot", text: "😊 Alright! What else can I help you with?" },
@@ -63,16 +83,15 @@ const ChatBot = () => {
       setUserInput("");
       return;
     }
-  
-    // If user answering "Did you get what you needed?" question
+
     if (awaitingEndConfirmation) {
-      if (lowerInput.includes("yes")) {
+      if (expandedInput.includes("yes")) {
         setMessages((prev) => [
           ...prev,
           { sender: "bot", text: "🧠 Would you like to end the conversation? (yes/no)" },
         ]);
         setAwaitingEndDecision(true);
-      } else if (lowerInput.includes("no")) {
+      } else if (expandedInput.includes("no")) {
         setMessages((prev) => [
           ...prev,
           { sender: "bot", text: "🤖 No worries! Tell me what you need help with." },
@@ -87,21 +106,20 @@ const ChatBot = () => {
       setUserInput("");
       return;
     }
-  
-    // Default behavior (normal question to server)
+
     try {
-      setIsTyping(true); // Start typing animation
-      const response = await axios.post("http://localhost:5000/api/bot/ask", { message: userInput });
+      setIsTyping(true);
+      const response = await axios.post("http://localhost:5000/api/bot/ask", { message: expandedInput });
       const botReply = response.data.reply || "Sorry, I couldn't find an answer.";
-  
+
       setTimeout(() => {
         setMessages((prev) => [
           ...prev,
           { sender: "bot", text: `🤖 ${botReply}` },
           { sender: "bot", text: "🤖 Did you get what you needed? (yes/no)" },
         ]);
-        setIsTyping(false); // Stop typing animation
-        setAwaitingEndConfirmation(true); // Now wait for user to answer yes/no
+        setIsTyping(false);
+        setAwaitingEndConfirmation(true);
       }, 1000);
     } catch (error) {
       console.error("Error sending message:", error);
@@ -111,44 +129,23 @@ const ChatBot = () => {
       ]);
       setIsTyping(false);
     }
-  
+
     setUserInput("");
   };
-  
 
   const handleKeyPress = (e) => {
     if (e.key === "Enter") sendMessage();
   };
 
-  // ✅ Fixed and merged your duplicate useEffect for detecting "yes"
   useEffect(() => {
-    if (messages.length >= 2) {
-      const lastBotMessage = messages[messages.length - 1];
-      const secondLastUserMessage = messages[messages.length - 2];
-
-      if (
-        lastBotMessage.sender === "bot" &&
-        lastBotMessage.text.includes("Did you get what you needed") &&
-        secondLastUserMessage?.sender === "user"
-      ) {
-        if (secondLastUserMessage.text.toLowerCase().includes("yes")) {
-          setAwaitingEndDecision(true);
-          setMessages((prev) => [
-            ...prev,
-            { sender: "bot", text: "🧠 Would you like to end the conversation or need anything else?" },
-          ]);
-        }
-      }
-    }
-  }, [messages]);
+    scrollToBottom();
+  }, [messages, isTyping]);
 
   useEffect(() => {
     if (!isTyping) return;
-
     const interval = setInterval(() => {
       setTypingDots((prev) => (prev.length < 3 ? prev + "." : "."));
     }, 500);
-
     return () => clearInterval(interval);
   }, [isTyping]);
 
@@ -230,6 +227,7 @@ const ChatBot = () => {
             userSelect: "none",
             backdropFilter: "blur(12px)",
             zIndex: 1000,
+            animation: "fadeIn 0.3s ease",
           }}
         >
           {/* Header */}
@@ -314,6 +312,7 @@ const ChatBot = () => {
                 Typing{typingDots}
               </div>
             )}
+            <div ref={messagesEndRef} />
           </div>
 
           {/* Input */}
