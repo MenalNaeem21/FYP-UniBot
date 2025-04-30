@@ -1,11 +1,14 @@
 const mongoose = require("mongoose");
 require("dotenv").config();
-
-const Timetable = require("../models/Timetable");  // Correct model import
+const Timetable = require("../models/Timetable");
 
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("🟢 MongoDB connected (bot service)"))
   .catch((err) => console.error("🔴 MongoDB connection error:", err));
+
+function escapeRegex(str) {
+  return str.replace(/[-[\]{}()*+?.,\\^$|#]/g, '\\$&'); // Removed \s inside []
+}
 
 // 🛠 Improved SMART query function
 async function queryTimetable(course) {
@@ -13,7 +16,7 @@ async function queryTimetable(course) {
 
   // Step 1: Try exact match first
   const exactMatches = await Timetable.find({
-    "Course Name": { $regex: `^${course}$`, $options: "i" },  // full course name match
+    "Course Name": { $regex: escapeRegex(course), $options: "i" },
     "Day": { $exists: true },
     "Time": { $exists: true },
     "Room": { $exists: true },
@@ -26,10 +29,10 @@ async function queryTimetable(course) {
   }
 
   // Step 2: If no exact match, fallback to word-wise match
-  const words = course.split(/\s+/); // split by spaces
+  const words = course.split(/\s+/);
   const partialMatches = await Timetable.find({
     $or: words.map(word => ({
-      "Course Name": { $regex: word, $options: "i" }
+      "Course Name": { $regex: escapeRegex(word), $options: "i" }
     })),
     "Day": { $exists: true },
     "Time": { $exists: true },
