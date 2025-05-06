@@ -75,7 +75,7 @@ const Astenrolled = () => {
 
   const handleAddStudent = async (values) => {
     try {
-      await axios.post('http://localhost:5000/api/admin/register', {
+      await axios.post('http://localhost:5000/api/admin/add-student', {
         courseId: selectedCourse.id,
         section: selectedCourse.sections,
         studentEmail: values.email,

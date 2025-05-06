@@ -11,6 +11,7 @@ import Error from './components/Error';
 import Profile from './components/Profile';
 import Todo from './components/Todo';
 import Sattendance from './components/Sattendance';
+import GradeChangeRequest from './components/GradeChangeRequest';
 import AdminLoginPage from './components/AdminLoginPage';
 import AdmNavbar from './components/AdmNavbar';
 import AdmHomePage from './components/AdmHomePage';
@@ -21,6 +22,7 @@ import Aregistration from './components/Aregistration';
 import Astenrolled from './components/Astenrolled';
 import Aprofile from './components/Aprofile';
 import Aworkflow from './components/Aworkflow';
+import AdminControls from './components/AdminControls';
 import TeacherLoginPage from './components/TeacherLoginPage';
 import TeacherHomePage from './components/TeacherHomePage';
 import TeacherNavbar from './components/TeacherNavbar';
@@ -30,6 +32,7 @@ import Tmarks from './components/Tmarks';
 import Tprofile from './components/Tprofile';
 import Treport from './components/Treport';
 import Tgrader from './components/Tgrader';
+import TgradeChangeRequests from './components/TgradeChangeRequests';
 const App = () => {
   const [authenticated, setAuthenticated] = useState(false);
   const [adminAuthenticated, setAdminAuthenticated] = useState(false);
@@ -104,6 +107,8 @@ const App = () => {
         <Route path="/workflow" element={authenticated ? <Todo /> : <LoginPage setAuthenticated={setAuthenticated} />} />
         <Route path="/marks" element={authenticated ? <Marks /> : <LoginPage setAuthenticated={setAuthenticated} />} />
         <Route path="/attendance" element={authenticated ? <Sattendance /> : <LoginPage setAuthenticated={setAuthenticated} />} />
+        <Route path="/gradechange" element={authenticated ? <GradeChangeRequest /> : <LoginPage setAuthenticated={setAuthenticated} />} />
+
 
         <Route path="/admhome" element={adminAuthenticated ? <AdmHomePage /> : <AdminLoginPage setAdminAuthenticated={setAdminAuthenticated} />} />
         <Route path="/astudent" element={adminAuthenticated ? <Astudent /> : <AdminLoginPage setAdminAuthenticated={setAdminAuthenticated} />} />
@@ -113,6 +118,7 @@ const App = () => {
         <Route path="/aprofile" element={adminAuthenticated ? <Aprofile /> : <AdminLoginPage setAdminAuthenticated={setAdminAuthenticated} />} />
         <Route path="/aworkflow" element={adminAuthenticated ? <Aworkflow /> : <AdminLoginPage setAdminAuthenticated={setAdminAuthenticated} />} />
         <Route path="/Astenrolled" element={adminAuthenticated ? <Astenrolled /> : <AdminLoginPage setAdminAuthenticated={setAdminAuthenticated} />} />
+        <Route path="/admincontrols" element={adminAuthenticated ? <AdminControls /> : <AdminLoginPage setAdminAuthenticated={setAdminAuthenticated} />} />
 
         <Route path="/teacherhome" element={teacherAuthenticated ? <TeacherHomePage /> : <TeacherLoginPage setTeacherAuthenticated={setTeacherAuthenticated} />} />
         <Route path="/tworkflow" element={teacherAuthenticated ? <Tworkflow /> : <TeacherLoginPage setTeacherAuthenticated={setTeacherAuthenticated} />} />
@@ -121,6 +127,7 @@ const App = () => {
         <Route path="/tprofile" element={teacherAuthenticated ? <Tprofile /> : <TeacherLoginPage setTeacherAuthenticated={setTeacherAuthenticated} />} />
         <Route path="/treport" element={teacherAuthenticated ? <Treport /> : <TeacherLoginPage setTeacherAuthenticated={setTeacherAuthenticated} />} />
         <Route path="/tgrader" element={teacherAuthenticated ? <Tgrader /> : <TeacherLoginPage setTeacherAuthenticated={setTeacherAuthenticated} />} />
+        <Route path="/tgradechange" element={teacherAuthenticated ? <TgradeChangeRequests /> : <TeacherLoginPage setTeacherAuthenticated={setTeacherAuthenticated} />} />
         <Route path="*" element={<Error />} />
       </Routes>
 

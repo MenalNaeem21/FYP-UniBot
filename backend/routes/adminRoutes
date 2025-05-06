@@ -7,6 +7,7 @@ const Marks = require('../models/Marks');
 const StudentGrade = require('../models/StudentGrade');
 const Faq = require('../models/Faq');
 const Complaint = require('../models/Complaint');
+const Classwork=require('../models/Classwork');
 const jwt = require("jsonwebtoken");
 
 const router = express.Router();
@@ -286,6 +287,51 @@ router.post('/registercourse', async (req, res) => {
       res.status(500).json({ message: 'Server error while updating course' });
     }
   });
+
+  // Add student to a course from Admin Panel
+router.post('/add-student', async (req, res) => {
+  try {
+    const { courseId, section, studentRollNo, studentEmail } = req.body;
+
+    const Student = require('../models/Student');
+    const Course = require('../models/Course');
+
+    const student = await Student.findOne({ rollNo: studentRollNo, email: studentEmail });
+    const course = await Course.findOne({ id: courseId });
+
+    if (!student || !course) {
+      return res.status(404).json({ message: 'Student or Course not found' });
+    }
+
+    // Check if already registered
+    const alreadyRegistered = student.registeredCourses.some(
+      (c) => c.id === courseId && c.section === section
+    );
+
+    if (alreadyRegistered) {
+      return res.status(400).json({ message: 'Student already registered in this course and section' });
+    }
+
+    // Add course to student's registeredCourses
+    student.registeredCourses.push({
+      id: courseId,
+      section: section,
+    });
+    await student.save();
+
+    // Decrease seat count in Course
+    if (course.seatAvailability > 0) {
+      course.seatAvailability -= 1;
+      await course.save();
+    }
+
+    res.json({ message: 'Student added successfully' });
+  } catch (error) {
+    console.error('Admin Add Student Error:', error);
+    res.status(500).json({ message: 'Failed to add student' });
+  }
+});
+
 
 // REGISTER COURSE
 router.post("/register", async (req, res) => {
@@ -607,6 +653,64 @@ router.get('/student-grades/:rollNo', async (req, res) => {
   }
 });
 
+// Get logged in student's grades
+router.get('/mystudentgrades', async (req, res) => {
+  try {
+    const { rollNo } = req.query;
+    const grades = await StudentGrade.find({ rollNo });
+    res.json(grades);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Failed to fetch student grades' });
+  }
+});
+// Post a grade change request
+router.post('/request-change', async (req, res) => {
+  try {
+    const { gradeId, comment } = req.body;
+
+    const grade = await StudentGrade.findById(gradeId);
+    if (!grade) return res.status(404).json({ message: 'Grade not found' });
+
+    grade.changeRequested = true;
+    grade.changeComment = comment || '';
+    grade.status = 'pending'; // ✅ Very important: Set status = pending
+    await grade.save();
+
+    res.json({ message: 'Grade change request submitted successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Failed to submit grade change request' });
+  }
+});
+router.get('/requests', async (req, res) => {
+  const { courseId, section } = req.query;
+  try {
+    const requests = await StudentGrade.find({ 
+      courseId, 
+      section, 
+      changeRequested: true 
+    });
+    res.json(requests);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Failed to fetch grade requests' });
+  }
+});
+router.put('/update-status', async (req, res) => {
+  const { gradeId, status } = req.body;
+  try {
+    const grade = await StudentGrade.findById(gradeId);
+    if (!grade) return res.status(404).json({ message: 'Grade not found' });
+
+    grade.status = status;
+    await grade.save();
+    res.json({ message: 'Status updated successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Failed to update status' });
+  }
+});
 
 
 // Update GPA and CGPA for a student
@@ -723,5 +827,286 @@ router.put('/edit-faq/:id', async (req, res) => {
     res.status(500).json({ message: 'Failed to update FAQ' });
   }
 });
+
+
+
+// GET /api/admin/classwork/:courseId/:courseSection
+router.get('/classwork/:courseId/:courseSection', async (req, res) => {
+  try {
+    const { courseId, courseSection } = req.params;
+    const classworks = await Classwork.find({ courseId, courseSection }).sort({ dueDate: 1 });
+    res.status(200).json(classworks);
+  } catch (error) {
+    console.error('Error fetching classwork:', error);
+    res.status(500).json({ message: 'Failed to fetch classwork' });
+  }
+});
+
+// Import multer
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+
+// Setup Multer for file uploads
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const uploadPath = path.join(__dirname, '../uploads');
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath);
+    }
+    cb(null, uploadPath);
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + '-' + file.originalname);
+  }
+});
+const upload = multer({ storage });
+
+// POST /api/admin/classwork/submit/:taskId
+// backend/adminRoutes.js
+// POST /api/admin/classwork/create
+// 🚀 Correct route with Multer:
+router.post('/classwork/create', upload.single('attachment'), async (req, res) => {
+  try {
+    const { title, description, dueDate, courseId, courseSection, courseName } = req.body;
+    const file = req.file; // ✅ Now file is available
+
+    const attachmentUrl = file ? `/uploads/${file.filename}` : '';
+
+    const classwork = new Classwork({
+      title,
+      description,
+      attachmentUrl,
+      dueDate,
+      courseId,
+      courseSection,
+      courseName,
+    });
+
+    await classwork.save();
+
+    res.status(201).json({ message: 'Classwork created successfully', taskId: classwork.taskId });
+  } catch (error) {
+    console.error('Error creating classwork:', error);
+    res.status(500).json({ message: 'Failed to create classwork' });
+  }
+});
+// ⚡ ROUTE: Submit or Update a classwork
+router.post('/classwork/submit/:taskId', upload.single('file'), async (req, res) => {
+  try {
+    const { taskId } = req.params;
+    const { rollNo, name } = req.body;
+    const file = req.file;
+
+    if (!file) {
+      return res.status(400).json({ message: 'No file uploaded' });
+    }
+
+    // 🔥 Find the classwork by taskId (not _id!)
+    const classwork = await Classwork.findOne({ taskId: Number(taskId) });
+
+    if (!classwork) {
+      return res.status(404).json({ message: 'Classwork not found' });
+    }
+
+    // 🔥 Check if the student already submitted
+    const existingSubmission = classwork.submissions.find(sub => sub.rollNo === rollNo);
+
+    if (existingSubmission) {
+      // If already submitted, update the file and date
+      existingSubmission.submittedFileUrl = `/uploads/${file.filename}`;
+      existingSubmission.submittedAt = new Date();
+      existingSubmission.status = 'Submitted';
+    } else {
+      // Otherwise, add a new submission
+      classwork.submissions.push({
+        rollNo,
+        name,
+        submittedFileUrl: `/uploads/${file.filename}`,
+        submittedAt: new Date(),
+        status: 'Submitted',
+      });
+    }
+
+    await classwork.save();
+
+    res.status(200).json({ message: 'Submission successful!' });
+  } catch (error) {
+    console.error('Error submitting classwork:', error);
+    res.status(500).json({ message: 'Server error submitting classwork.' });
+  }
+});
+
+
+
+// GET /api/admin/classwork/submissions/:taskId (🔥 fixed to work by taskId not _id)
+
+
+// DELETE /api/admin/classwork/delete/:classworkId
+router.delete('/classwork/delete/:classworkId', async (req, res) => {
+  try {
+    const { classworkId } = req.params;
+    await Classwork.findByIdAndDelete(classworkId);
+    res.status(200).json({ message: 'Classwork deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting classwork:', error);
+    res.status(500).json({ message: 'Failed to delete classwork' });
+  }
+});
+
+// GET /api/admin/classwork/student?rollNo=ROLL_NO
+router.get('/classwork/student', async (req, res) => {
+  try {
+    const { rollNo } = req.query;
+
+    if (!rollNo) {
+      return res.status(400).json({ message: 'Roll number required' });
+    }
+
+    const student = await Student.findOne({ rollNo });
+    if (!student) {
+      return res.status(404).json({ message: 'Student not found' });
+    }
+
+    const courses = student.registeredCourses; // [{ id, section }]
+
+    if (!courses || courses.length === 0) {
+      return res.status(404).json({ message: 'No registered courses found' });
+    }
+
+    const classworks = await Classwork.find({
+      $or: courses.map(c => ({ courseId: c.id, courseSection: c.section })),
+    }).sort({ dueDate: 1 });
+
+    res.status(200).json(classworks);
+  } catch (error) {
+    console.error('Error fetching student classworks:', error);
+    res.status(500).json({ message: 'Failed to fetch classworks' });
+  }
+});
+
+// GET /api/admin/classwork/all
+router.get('/classwork/all', async (req, res) => {
+  try {
+    const classworks = await Classwork.find().sort({ createdAt: -1 });
+    res.status(200).json(classworks);
+  } catch (error) {
+    console.error('Error fetching all classworks:', error);
+    res.status(500).json({ message: 'Failed to fetch classworks' });
+  }
+});
+
+// GET /api/admin/classwork/all-submissions
+router.get('/classwork/all-submissions', async (req, res) => {
+  try {
+    const classworks = await Classwork.find({}, 'submissions');
+    const allSubmissions = classworks.flatMap(cw => cw.submissions || []);
+    res.status(200).json(allSubmissions);
+  } catch (error) {
+    console.error('Error fetching all submissions:', error);
+    res.status(500).json({ message: 'Failed to fetch all submissions' });
+  }
+});
+
+// GET /api/admin/classwork/submissions-course/:courseId/:courseSection
+router.get('/classwork/submissions-course/:courseId/:courseSection', async (req, res) => {
+  try {
+    const { courseId, courseSection } = req.params;
+    
+    const classworks = await Classwork.find({ courseId, courseSection });
+
+    if (!classworks || classworks.length === 0) {
+      return res.status(404).json({ message: 'No classwork found for this course/section' });
+    }
+
+    const allSubmissions = classworks.flatMap(cw => cw.submissions || []);
+
+    res.status(200).json(allSubmissions);
+  } catch (error) {
+    console.error('Error fetching submissions by course:', error);
+    res.status(500).json({ message: 'Failed to fetch submissions' });
+  }
+});
+
+
+
+// GET /api/admin/classwork/submissions/:taskId
+// GET /api/admin/classwork/submissions/:taskId
+router.get('/classwork/submissions/:taskId', async (req, res) => {
+  try {
+    let { taskId } = req.params;
+    taskId = Number(taskId); // 🛠 very important to convert to number
+    const classwork = await Classwork.findOne({ taskId: taskId });
+    if (!classwork) {
+      console.log('Classwork not found for taskId:', taskId);
+      return res.status(404).json({ message: 'No classwork found for this task ID' });
+    }
+
+    console.log('Found classwork:', classwork);
+
+    res.status(200).json(classwork.submissions || []);
+  } catch (error) {
+    console.error('Error fetching submissions:', error);
+    res.status(500).json({ message: 'Failed to fetch submissions' });
+  }
+});
+
+
+router.get('/submissions-taskid/:taskId', async (req, res) => {
+  try {
+    const { taskId } = req.params;
+
+    const numericTaskId = parseInt(taskId, 10); // 🔥 forcefully convert to Number
+
+    if (isNaN(numericTaskId)) {
+      return res.status(400).json({ message: 'Invalid Task ID format' });
+    }
+
+    const classwork = await Classwork.findOne({ taskId: numericTaskId });
+
+    if (!classwork) {
+      return res.status(404).json({ message: 'No classwork found for this task ID' });
+    }
+
+    res.status(200).json(classwork.submissions || []);
+  } catch (error) {
+    console.error('Error fetching submissions by taskId:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// PATCH /api/admin/classwork/update/:id
+router.patch('/classwork/update/:id', upload.single('attachment'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, description, dueDate } = req.body;
+    const updateFields = {
+      title,
+      description,
+      dueDate,
+    };
+
+    if (req.file) {
+      updateFields.attachmentUrl = `/uploads/${req.file.filename}`;
+    }
+
+    const updatedClasswork = await Classwork.findByIdAndUpdate(
+      id,
+      { $set: updateFields },
+      { new: true }
+    );
+
+    if (!updatedClasswork) {
+      return res.status(404).json({ message: 'Classwork not found' });
+    }
+
+    res.status(200).json({ message: 'Classwork updated successfully', updatedClasswork });
+  } catch (error) {
+    console.error('Error updating classwork:', error);
+    res.status(500).json({ message: 'Failed to update classwork' });
+  }
+});
+
+
 
 module.exports = router;

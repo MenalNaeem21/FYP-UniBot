@@ -46,6 +46,9 @@ const TeacherNavbar = ({ setAuthenticated, setAdminAuthenticated, setTeacherAuth
         <Menu.Item key="workflow" icon={<ProductOutlined />}>
           <Link to="/tworkflow">My Workflow</Link>
         </Menu.Item>
+        <Menu.Item key="tgradechange" icon={<ProductOutlined />}>
+          <Link to="/tgradechange">Grade Change Requests</Link>
+        </Menu.Item>
         <Menu.Item key="profile" className="profile-menu" style={{ marginLeft: 'auto' }}>
           <Dropdown overlay={profileMenu} trigger={['click']} placement="bottomRight">
             <Button type="link" icon={<UserOutlined />} style={{ color: 'white' }}>

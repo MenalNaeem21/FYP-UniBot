@@ -46,8 +46,8 @@ const AdmNavbar = ({ setAuthenticated, setAdminAuthenticated, setTeacherAuthenti
         <Menu.Item key="enrolled" icon={<BarChartOutlined />}>
           <Link to="/Astenrolled">Registrations</Link>
         </Menu.Item>
-        <Menu.Item key="workflow" icon={<ProductOutlined />}>
-          <Link to="/aworkflow">My Workflow</Link>
+        <Menu.Item key="controls" icon={<ProductOutlined />}>
+          <Link to="/admincontrols">Controls</Link>
         </Menu.Item>
         
         <Menu.Item key="profile" className="profile-menu" style={{ marginLeft: 'auto' }}>

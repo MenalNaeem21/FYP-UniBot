@@ -10,7 +10,10 @@ const courseRoutes = require("./routes/courseRoutes");
 const authRoutes = require("./routes/authRoutes");
 const adminRoutes = require("./routes/adminRoutes"); 
 const timetableRoutes = require('./routes/timetableRoutes');
+const controlsRoutes = require('./routes/controls');
 
+
+const path = require('path');
 dotenv.config();
 const app = express();
 
@@ -63,6 +66,9 @@ app.use("/api/courses", courseRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
 app.use('/api', timetableRoutes);
+app.use('/api/controls', controlsRoutes);
+// Allow CORS on static files too
+app.use('/uploads', cors(), express.static(path.join(__dirname, 'uploads')));
 
 // 🔹 Example of a Protected Admin Route testing..
 

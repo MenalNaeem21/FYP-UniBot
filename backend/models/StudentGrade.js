@@ -10,7 +10,16 @@ const studentGradeSchema = new mongoose.Schema({
   weightedScore: Number,
   grade: String,
   gpa: String,
+  status: String,
   gradeType: { type: String, enum: ['absolute', 'relative'], default: 'absolute' },
+  changeRequested: {
+    type: Boolean,
+    default: false,
+  },
+  changeComment: {
+    type: String,
+    default: '',
+  }
 });
 
 module.exports = mongoose.model('StudentGrade', studentGradeSchema);
