@@ -8,7 +8,30 @@ const shortForms = {
   ai: "artificial intelligence",
   pdc: "parallel distributed computing",
 };
-
+const sendBotQuery = async (userMessage, user = null) => {
+    try {
+      const response = await fetch('/api/bot/ask', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userMessage, user }),
+      });
+  
+      const data = await response.json();
+  
+      if (response.ok) {
+        return data.response;
+      } else {
+        console.error('Bot error:', data.error);
+        return "⚠️ Sorry, something went wrong.";
+      }
+    } catch (error) {
+      console.error('Fetch error:', error);
+      return "🚫 Unable to connect to the server.";
+    }
+  };
+  
 function expandShortForms(text) {
   let expanded = text;
   for (const short in shortForms) {
