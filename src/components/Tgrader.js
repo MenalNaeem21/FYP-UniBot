@@ -51,12 +51,27 @@ const Tgrader = () => {
 
   const [gradingMethod, setGradingMethod] = useState('absolute'); // absolute or relative
   const [gradingScale, setGradingScale] = useState([...gradeScaleAbsoluteDefault]);
+  const [graderAllowed, setGraderAllowed] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const tid = localStorage.getItem('tid');
 
   useEffect(() => {
-    if (tid) fetchCourses();
-  }, [tid]);
+    const fetchInitialData = async () => {
+      try {
+        // Fetch grader control
+        const controlsRes = await axios.get('http://localhost:5000/api/controls');
+        setGraderAllowed(controlsRes.data.graderOpen);
+        if (tid) fetchCourses();
+      } catch (error) {
+        console.error(error);
+        message.error('Failed to load grader settings or courses');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchInitialData();
+      }, [tid]);
 
   const fetchCourses = async () => {
     try {
@@ -155,7 +170,19 @@ const Tgrader = () => {
       prevScale.map((item) => (item.grade === grade ? { ...item, min } : item))
     );
   };
+  
+  if (loading) return null;
 
+  if (!graderAllowed) {
+    return (
+      <div className="grader-container">
+        <Card style={{ textAlign: 'center', marginTop: '20vh' }}>
+          <Title level={2}>🚫 Grading Period Closed</Title>
+          <Text>Please check back later!</Text>
+        </Card>
+      </div>
+    );
+  }
   const columns = [
     { title: 'Roll No', dataIndex: 'rollNo', key: 'rollNo' },
     { title: 'Name', dataIndex: 'name', key: 'name' },

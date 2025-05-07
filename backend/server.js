@@ -3,26 +3,19 @@ const dotenv = require("dotenv");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
-const { askBot } = require("./customBot/bot"); // Import the askBot function from the custom bot
-dotenv.config(); // ✅ Load .env before anything else!
-const Timetable = require("./models/Timetable"); // Ensure this path is correct
 
+const studentRoutes = require("./routes/studentRoutes");
+const teacherRoutes = require("./routes/teacherRoutes");
+const courseRoutes = require("./routes/courseRoutes");
+const authRoutes = require("./routes/authRoutes");
+const adminRoutes = require("./routes/adminRoutes"); 
+const timetableRoutes = require('./routes/timetableRoutes');
+const controlsRoutes = require('./routes/controls');
+
+
+const path = require('path');
+dotenv.config();
 const app = express();
-
-// MongoDB Connection
-mongoose
-  .connect(process.env.MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-  })
-  .then(async () => {
-    console.log("MongoDB Connected ✅");
-
-    // TESTING PURPOSE ONLY 👇
-    const sample = await Timetable.findOne();
-    console.log("📦 Sample Document from Timetable:", sample);
-  })
-  .catch((err) => console.error(err));
 
 // Middleware
 app.use(cors({
@@ -30,6 +23,12 @@ app.use(cors({
   credentials: true
 }));
 app.use(express.json());
+
+// MongoDB Connection
+mongoose
+  .connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => console.log("MongoDB Connected"))
+  .catch((err) => console.error(err));
 
 // 🔹 AUTHENTICATION MIDDLEWARE (Protect Routes)
 const authenticate = (req, res, next) => {
@@ -48,6 +47,7 @@ const authenticate = (req, res, next) => {
   }
 };
 
+
 // 🔹 AUTHORIZATION MIDDLEWARE (Restrict Access Based on Role)
 const authorize = (roles) => (req, res, next) => {
   console.log("🔍 User in authorize middleware:", req.user); // Debugging
@@ -58,14 +58,8 @@ const authorize = (roles) => (req, res, next) => {
   next();
 };
 
-// Routes
-const studentRoutes = require("./routes/studentRoutes");
-const teacherRoutes = require("./routes/teacherRoutes");
-const courseRoutes = require("./routes/courseRoutes");
-const authRoutes = require("./routes/authRoutes");
-const adminRoutes = require("./routes/adminRoutes");
-const timetableRoutes = require('./routes/timetableRoutes');
 
+// Routes
 app.use("/api/students", studentRoutes);
 app.use("/api/teachers", teacherRoutes);
 app.use("/api/courses", courseRoutes);
@@ -90,7 +84,13 @@ app.post("/api/bot/ask", async (req, res) => {
     res.status(500).json({ error: "Oops! Something went wrong while processing your request." });
   }
 });
+app.use('/api', timetableRoutes);
+app.use('/api/controls', controlsRoutes);
+// Allow CORS on static files too
+app.use('/uploads', cors(), express.static(path.join(__dirname, 'uploads')));
 
+// 🔹 Example of a Protected Admin Route testing..
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

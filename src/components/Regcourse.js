@@ -27,25 +27,34 @@ const Regcourse = () => {
   const [waitlist, setWaitlist] = useState([]);
   const [studentData, setStudentData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [selectedSemester, setSelectedSemester] = useState('Fall'); // Default semester
+  const [registrationAllowed, setRegistrationAllowed] = useState(false);
+  const [activeSemester, setActiveSemester] = useState('Fall');
+  const [selectedSemester, setSelectedSemester] = useState('Fall');
 
   useEffect(() => {
-    const fetchStudentData = async () => {
+    const fetchInitialData = async () => {
       try {
+        // Fetch student data
         const token = localStorage.getItem("studentToken");
-        const response = await axios.get("http://localhost:5000/api/auth/studentprofile", {
+        const studentRes = await axios.get("http://localhost:5000/api/auth/studentprofile", {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setStudentData(response.data);
+        setStudentData(studentRes.data);
+
+        // Fetch controls data
+        const controlsRes = await axios.get('http://localhost:5000/api/controls');
+        setRegistrationAllowed(controlsRes.data.registrationOpen);
+        setActiveSemester(controlsRes.data.activeSemester);
+        setSelectedSemester(controlsRes.data.activeSemester);
       } catch (error) {
-        console.error("Error fetching student profile:", error);
-        message.error("Failed to load student profile");
+        console.error("Error fetching initial data:", error);
+        message.error("Failed to load registration settings or student profile");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchStudentData();
+    fetchInitialData();
   }, []);
 
   const fetchCourses = useCallback(async () => {
@@ -86,11 +95,11 @@ const Regcourse = () => {
       const res = await axios.post('http://localhost:5000/api/admin/register', {
         courseId: course.id,
         section: course.sections,
-        semester: course.semester, // 📌 Send semester here!
+        semester: course.semester,
         studentEmail: studentData.email,
         studentRollNo: studentData.rollNo,
       });
-  
+
       if (res.data.status === 'waitlisted') {
         setWaitlist([...waitlist, course]);
         message.warning(`${course.name} is full. You’ve been waitlisted.`);
@@ -98,8 +107,8 @@ const Regcourse = () => {
         setRegisteredCourses([...registeredCourses, course]);
         message.success(`${course.name} registered successfully!`);
       }
-  
-      fetchCourses(); 
+
+      fetchCourses();
     } catch (err) {
       console.error("Frontend registration error:", err);
       message.error('Failed to register for course');
@@ -238,6 +247,17 @@ const Regcourse = () => {
 
   if (loading) return null;
 
+  if (!registrationAllowed) {
+    return (
+      <div className="reg-container">
+        <Card style={{ textAlign: 'center', marginTop: '20vh' }}>
+          <Title level={2}>🚫 Registration Period Closed</Title>
+          <Text>Please check back later!</Text>
+        </Card>
+      </div>
+    );
+  }
+
   const filteredCourses = availableCourses.filter(c => c.semester === selectedSemester);
 
   return (
@@ -252,11 +272,11 @@ const Regcourse = () => {
       <main className="reg-content">
         <Card title="Available Courses" className="reg-card">
           <Space style={{ marginBottom: 16 }}>
-            <Text strong>Select Semester: </Text>
+            <Text strong>Semester:</Text>
             <Select
               value={selectedSemester}
-              onChange={(value) => setSelectedSemester(value)}
               style={{ width: 150 }}
+              disabled
             >
               <Option value="Fall">Fall</Option>
               <Option value="Spring">Spring</Option>

@@ -1,201 +1,119 @@
-import React, { useState } from 'react';
+// src/components/Sworkflow.js
+import React, { useState, useEffect } from 'react';
 import {
   Button,
   Table,
   Card,
   Typography,
   Modal,
-  Form,
-  Input,
-  DatePicker,
-  Select,
   Upload,
-  Checkbox,
+  message,
+  Row,
+  Col,
+  Statistic,
 } from 'antd';
-import {
-  PlusOutlined,
-  DeleteOutlined,
-  EditOutlined,
-  UploadOutlined,
-} from '@ant-design/icons';
+import { UploadOutlined, EditOutlined } from '@ant-design/icons';
+import axios from 'axios';
 import dayjs from 'dayjs';
-import './Todo.css';
+import './Tworkflow.css'; // ✅ Reusing the same CSS
 
 const { Title, Text } = Typography;
-const { Option } = Select;
 
 const Todo = () => {
   const [tasks, setTasks] = useState([]);
+  const [studentData, setStudentData] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [form] = Form.useForm();
-  const [editingTask, setEditingTask] = useState(null);
-  const timetableData = [
-    {
-      key: '1',
-      day: 'Monday',
-      time: '9:00 AM - 10:30 AM',
-      course: 'CS101 - Intro to Programming',
-      instructor: 'Dr. John Doe',
-    },
-    {
-      key: '2',
-      day: 'Tuesday',
-      time: '11:00 AM - 12:30 PM',
-      course: 'MATH201 - Calculus II',
-      instructor: 'Prof. Jane Smith',
-    },
-    {
-      key: '3',
-      day: 'Wednesday',
-      time: '1:00 PM - 2:30 PM',
-      course: 'ENG101 - English Composition',
-      instructor: 'Dr. Emily Clark',
-    },
-    {
-      key: '4',
-      day: 'Thursday',
-      time: '10:00 AM - 11:30 AM',
-      course: 'PHYS101 - Physics I',
-      instructor: 'Prof. Alan Brown',
-    },
-    {
-      key: '5',
-      day: 'Friday',
-      time: '2:00 PM - 3:30 PM',
-      course: 'CS202 - Data Structures',
-      instructor: 'Dr. Sarah White',
-    },
-  ];
-  const timetableColumns = [
-    {
-      title: 'Day',
-      dataIndex: 'day',
-      key: 'day',
-    },
-    {
-      title: 'Time',
-      dataIndex: 'time',
-      key: 'time',
-    },
-    {
-      title: 'Course',
-      dataIndex: 'course',
-      key: 'course',
-    },
-    {
-      title: 'Instructor',
-      dataIndex: 'instructor',
-      key: 'instructor',
-    },
-  ];
-  const attendData = [
-    {
-      key: '1',
-      course: 'CS101 - Intro to Programming',
-      instructor: 'Dr. John Doe',
-      percentage:'87%'
-    },
-    {
-      key: '2',
-      course: 'MATH201 - Calculus II',
-      instructor: 'Prof. Jane Smith',
-       percentage:'22%'
-    },
-    {
-      key: '3',
-      course: 'ENG101 - English Composition',
-      instructor: 'Dr. Emily Clark',
-       percentage:'89%'
-    },
-    {
-      key: '4',
-      course: 'PHYS101 - Physics I',
-      instructor: 'Prof. Alan Brown',
-       percentage:'70%'
-    },
-    {
-      key: '5',
-      course: 'CS202 - Data Structures',
-      instructor: 'Dr. Sarah White',
-       percentage:'67%'
-    },
-  ];
-  const attendcolumn = [
-    {
-      title: 'Course',
-      dataIndex: 'course',
-      key: 'course',
-    },
-    {
-      title: 'Instructor',
-      dataIndex: 'instructor',
-      key: 'instructor',
-    },
-    {
-      title: 'Percentage',
-      dataIndex: 'percentage',
-      key: 'percentage',
-    }
-  ];
-  const handleAddTask = (values) => {
-    const newTask = {
-      id: editingTask ? editingTask.id : Date.now(),
-      ...values,
-      dueDate: values.dueDate ? values.dueDate.format('YYYY-MM-DD') : '',
-      attachment: values.attachment?.file?.name || 'No File',
-      completed: false,
-    };
+  const [selectedTask, setSelectedTask] = useState(null);
+  const [uploadingFile, setUploadingFile] = useState(null);
 
-    if (editingTask) {
-      setTasks((prev) =>
-        prev.map((task) => (task.id === editingTask.id ? newTask : task))
-      );
-      setEditingTask(null);
-    } else {
-      setTasks((prev) => [...prev, newTask]);
+  useEffect(() => {
+    fetchStudentProfile();
+  }, []);
+
+  const fetchStudentProfile = async () => {
+    try {
+      const token = localStorage.getItem('studentToken');
+      const res = await axios.get('http://localhost:5000/api/auth/studentprofile', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setStudentData(res.data);
+      fetchClasswork(res.data);
+    } catch (error) {
+      console.error('Error fetching student profile:', error);
+      message.error('Failed to load student profile');
     }
-    setIsModalOpen(false);
-    form.resetFields();
   };
 
-  const handleDelete = (id) => {
-    setTasks((prev) => prev.filter((task) => task.id !== id));
+  const fetchClasswork = async (student) => {
+    try {
+      const res = await axios.get('http://localhost:5000/api/admin/classwork/student', {
+        params: { rollNo: student.rollNo },
+      });
+
+      // Mark whether submitted or not (basic flag)
+      const enrichedTasks = res.data.map(task => ({
+        ...task,
+        id: task._id,
+        taskId: task.taskId,
+        dueDate: dayjs(task.dueDate).format('YYYY-MM-DD'),
+        attachment: task.attachmentUrl ? task.attachmentUrl.split('/').pop() : 'No File',
+        attachmentUrl: task.attachmentUrl || '',
+        isSubmitted: task.submissions?.some(sub => sub.rollNo === student.rollNo) || false,
+      }));
+
+      setTasks(enrichedTasks);
+    } catch (error) {
+      console.error('Error loading classwork:', error);
+      message.error('Failed to fetch classwork');
+    }
   };
 
-  const handleEdit = (task) => {
-    setEditingTask(task);
-    form.setFieldsValue({
-      ...task,
-      dueDate: dayjs(task.dueDate),
-    });
+  const handleUpload = async () => {
+    if (!uploadingFile || !selectedTask) return;
+  
+    const formData = new FormData();
+    formData.append('file', uploadingFile);
+    formData.append('rollNo', studentData.rollNo);
+    formData.append('name', studentData.name);
+
+    try {
+      const token = localStorage.getItem('studentToken');
+      await axios.post(`http://localhost:5000/api/admin/classwork/submit/${selectedTask.taskId}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+  
+      message.success('Submission successful!');
+      setIsModalOpen(false);
+      setUploadingFile(null);
+      setSelectedTask(null);
+      fetchClasswork(studentData); // 🔥 Refresh classwork list
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      message.error('Failed to submit classwork.');
+    }
+  };
+
+  const openUploadModal = (task) => {
+    setSelectedTask(task);
     setIsModalOpen(true);
   };
 
-  const handleComplete = (id) => {
-    setTasks((prev) =>
-      prev.map((task) =>
-        task.id === id ? { ...task, completed: !task.completed } : task
-      )
-    );
-  };
+  // Analytics
+  const pendingCount = tasks.filter(task => !task.isSubmitted && dayjs().isBefore(task.dueDate)).length;
+  const submittedCount = tasks.filter(task => task.isSubmitted).length;
+  const expiredCount = tasks.filter(task => !task.isSubmitted && dayjs().isAfter(task.dueDate)).length;
 
   const columns = [
     {
-      title: '✔️',
-      dataIndex: 'completed',
-      render: (completed, record) => (
-        <Checkbox
-          checked={completed}
-          onChange={() => handleComplete(record.id)}
-        />
-      ),
+      title: 'Course',
+      render: (text, record) => `${record.courseId} (${record.courseName})`,
     },
     {
       title: 'Task',
       dataIndex: 'title',
-      render: (text, record) => (
-        <span className={record.completed ? 'completed-task' : ''}>{text}</span>
-      ),
     },
     {
       title: 'Description',
@@ -206,39 +124,85 @@ const Todo = () => {
       dataIndex: 'dueDate',
     },
     {
-      title: 'Priority',
-      dataIndex: 'priority',
-    },
-    {
       title: 'Attachment',
       dataIndex: 'attachment',
-      render: (text) => (text !== 'No File' ? <a href="#">{text}</a> : 'No File'),
+      render: (text, record) =>
+        record.attachment !== 'No File' ? (
+          <a href={`http://localhost:5000${record.attachmentUrl}`} target="_blank" rel="noopener noreferrer">
+            {text}
+          </a>
+        ) : (
+          'No File'
+        ),
+    },
+    
+    {
+      title: 'Status',
+      render: (_, record) => (
+        record.isSubmitted ? <Text type="success">Submitted</Text> : <Text type="danger">Pending</Text>
+      ),
     },
     {
-      title: 'Actions',
-      render: (_, record) => (
-        <div className="action-buttons">
-          <Button icon={<EditOutlined />} onClick={() => handleEdit(record)} />
-          <Button
-            icon={<DeleteOutlined />}
-            onClick={() => handleDelete(record.id)}
-            danger
-          />
-        </div>
-      ),
+      title: 'Action',
+      render: (_, record) => {
+        const duePassed = dayjs().isAfter(record.dueDate);
+
+        if (record.isSubmitted) {
+          return (
+            <Button
+              type="dashed"
+              icon={<EditOutlined />}
+              onClick={() => openUploadModal(record)}
+            >
+              Edit Submission
+            </Button>
+          );
+        } else if (duePassed) {
+          return <Button type="default" disabled>Due Passed</Button>;
+        } else {
+          return (
+            <Button
+              type="primary"
+              icon={<UploadOutlined />}
+              onClick={() => openUploadModal(record)}
+            >
+              Submit
+            </Button>
+          );
+        }
+      },
     },
   ];
 
   return (
-    <div className= "todo-page">
+    <div className="todo-page">
       <header className="welcome-header">
-        <Title level={2} className="welcome-title">📋 Workflow Task Manager</Title>
+        <Title level={2} className="welcome-title">📋 Classwork Submissions</Title>
         <Text type="secondary">
-          Manage your tasks and deliverables efficiently.
+          View assigned tasks and submit your work.
         </Text>
       </header>
-      
-      <main className="todo-content">
+
+      {/* Analytics */}
+      <Row gutter={16} style={{ marginTop: 20 }}>
+        <Col span={8}>
+          <Card>
+            <Statistic title="Pending Work" value={pendingCount} />
+          </Card>
+        </Col>
+        <Col span={8}>
+          <Card>
+            <Statistic title="Submitted Work" value={submittedCount} valueStyle={{ color: '#3f8600' }} />
+          </Card>
+        </Col>
+        <Col span={8}>
+          <Card>
+            <Statistic title="Missed Deadlines" value={expiredCount} valueStyle={{ color: '#cf1322' }} />
+          </Card>
+        </Col>
+      </Row>
+
+      <main className="todo-content" style={{ marginTop: 30 }}>
         <Card className="todo-card">
           <Table
             dataSource={tasks}
@@ -247,99 +211,27 @@ const Todo = () => {
             className="task-table"
             pagination={{ pageSize: 5 }}
           />
-           <div className="add-task-section">
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={() => setIsModalOpen(true)}
-              className="add-task-button"
-            >
-              Add Task
-            </Button>
-          </div>
         </Card>
       </main>
 
-      {/* Modal for Adding/Editing Tasks */}
+      {/* Modal for Uploading Submissions */}
       <Modal
-        title={editingTask ? 'Edit Task' : 'Add Task'}
+        title={selectedTask?.isSubmitted ? 'Edit Your Submission' : 'Submit Classwork'}
         open={isModalOpen}
-        onCancel={() => {
-          setIsModalOpen(false);
-          setEditingTask(null);
-          form.resetFields();
-        }}
-        onOk={() => form.submit()}
-        okText={editingTask ? 'Update' : 'Add'}
+        onCancel={() => setIsModalOpen(false)}
+        onOk={handleUpload}
+        okText={selectedTask?.isSubmitted ? 'Update' : 'Submit'}
+        okButtonProps={{ disabled: !uploadingFile }}
       >
-        <Form form={form} layout="vertical" onFinish={handleAddTask}>
-          <Form.Item
-            name="title"
-            label="Task Title"
-            rules={[{ required: true, message: 'Please enter the task title' }]}
-          >
-            <Input placeholder="Enter task title" />
-          </Form.Item>
-          <Form.Item
-            name="description"
-            label="Description"
-            rules={[
-              { required: true, message: 'Please enter the task description' },
-            ]}
-          >
-            <Input.TextArea rows={3} placeholder="Enter task description" />
-          </Form.Item>
-          <Form.Item
-            name="dueDate"
-            label="Due Date"
-            rules={[{ required: true, message: 'Please select the due date' }]}
-          >
-            <DatePicker className="date-picker" />
-          </Form.Item>
-          <Form.Item
-            name="priority"
-            label="Priority Level"
-            rules={[
-              { required: true, message: 'Please select the priority level' },
-            ]}
-          >
-            <Select placeholder="Select priority level">
-              <Option value="High">High</Option>
-              <Option value="Medium">Medium</Option>
-              <Option value="Low">Low</Option>
-            </Select>
-          </Form.Item>
-          <Form.Item name="attachment" label="File Attachment (Optional)">
-            <Upload beforeUpload={() => false}>
-              <Button icon={<UploadOutlined />}>Upload File</Button>
-            </Upload>
-          </Form.Item>
-        </Form>
+        <Upload
+          beforeUpload={(file) => {
+            setUploadingFile(file);
+            return false; // prevent auto-upload
+          }}
+        >
+          <Button icon={<UploadOutlined />}>Select File</Button>
+        </Upload>
       </Modal>
-      <Card className="timetable-card">
-          <Title level={3} className="timetable-title">
-            📅 Weekly Class Timetable
-          </Title>
-          <Table
-            dataSource={timetableData}
-            columns={timetableColumns}
-            rowKey="key"
-            className="timetable-table"
-            pagination={false}
-          />
-        </Card>
-        <Card className="timetable-card">
-          <Title level={3} className="timetable-title">
-            📅 Attendance
-          </Title>
-          <Table
-            dataSource={attendData}
-            columns={attendcolumn}
-            rowKey="key"
-            className="timetable-table"
-            pagination={false}
-          />
-        </Card>
     </div>
   );
 };

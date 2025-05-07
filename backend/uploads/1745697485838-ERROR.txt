@@ -1,0 +1,16 @@
+ERROR
+Script error.
+    at handleError (http://localhost:3000/static/js/bundle.js:162288:58)
+    at http://localhost:3000/static/js/bundle.js:162307:7
+ERROR
+Cannot read properties of undefined (reading 'init')
+TypeError: Cannot read properties of undefined (reading 'init')
+    at script2.onload (http://localhost:3000/static/js/bundle.js:104:30)
+ERROR
+Script error.
+    at handleError (http://localhost:3000/static/js/bundle.js:162288:58)
+    at http://localhost:3000/static/js/bundle.js:162307:7
+ERROR
+Cannot read properties of undefined (reading 'init')
+TypeError: Cannot read properties of undefined (reading 'init')
+    at script2.onload (http://localhost:3000/static/js/bundle.js:104:30)
