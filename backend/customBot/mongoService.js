@@ -48,5 +48,26 @@ async function queryTimetable(course) {
   console.log("🚫 No matches found");
   return [];
 }
+async function findProfessorCourses(name) {
+  if (!name) return [];
 
-module.exports = { queryTimetable };
+  const cleanedName = name.replace(/^(prof\.?|professor|dr|ms\.?|mr\.?)\s*/i, "").trim(); // remove title if user adds it
+  return await Timetable.find({
+    Instructor: { $regex: new RegExp(cleanedName, "i") },
+    "Course Name": { $exists: true },
+    Day: { $exists: true },
+    Time: { $exists: true },
+    Room: { $exists: true },
+    Section: { $exists: true }
+  });
+}
+
+async function getStudentById(id) {
+  return await Student.findById(id).lean();
+}
+
+
+ 
+
+
+module.exports = { queryTimetable,  findProfessorCourses,  getStudentById };
