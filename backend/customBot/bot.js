@@ -84,7 +84,7 @@ async function askBot(userMessage, user = null) {
       🕒 *Time:* ${entry.Time}
       🏫 *Room:* ${entry.Room}
       👨‍🏫 *Instructor:* ${entry.Instructor}
-      ━━━━━━━━━━━━━━━━━
+      
       `;
       }).join("\n");
       

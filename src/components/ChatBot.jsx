@@ -132,8 +132,8 @@ const ChatBot = () => {
 
     try {
       setIsTyping(true);
-      const response = await axios.post("http://localhost:5000/api/bot/ask", { message: expandedInput });
-      const botReply = response.data.reply || "Sorry, I couldn't find an answer.";
+      const response = await axios.post("http://localhost:5000/api/bot/ask", { userMessage: expandedInput });
+      const botReply = response.data.response || "Sorry, I couldn't find an answer.";
 
       setTimeout(() => {
         setMessages((prev) => [
