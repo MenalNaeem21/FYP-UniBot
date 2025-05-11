@@ -1,3 +1,279 @@
+/*const express = require("express");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const Student = require("../models/Student");
+const Teacher = require("../models/Teacher");
+const Admin = require("../models/admin");
+const Attendance = require("../models/attendance");
+const router = express.Router();
+
+// Register Student, Teacher, or Admin
+router.post("/registerst", async (req, res) => {
+  try {
+    const {
+      name, gender, dob, cnic, rollNo, degreeProgram, batch, campus,
+      email, password, mobile, bloodGroup, address, familyInfo, role,
+    } = req.body;
+
+    if (!["student", "teacher", "admin"].includes(role)) {
+      return res.status(400).json({ message: "Invalid role specified" });
+    }
+
+    let existingUser =
+      role === "student"
+        ? await Student.findOne({ email })
+        : role === "teacher"
+        ? await Teacher.findOne({ email })
+        : await Admin.findOne({ email });
+
+    if (existingUser) {
+      return res.status(400).json({ message: "User already exists" });
+    }
+
+    let newUser;
+
+    if (role === "student") {
+      newUser = new Student({
+        name, gender, dob, cnic, rollNo, degreeProgram, batch, campus,
+        email, password, mobile, bloodGroup, address, familyInfo, role
+      });
+    } else if (role === "teacher") {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      newUser = new Teacher({ name, email, password: hashedPassword, role });
+    } else if (role === "admin") {
+      newUser = new Admin({ name, email, password, role });
+    }
+
+    await newUser.save();
+    res.status(201).json({ message: `${role} registered successfully` });
+
+  } catch (error) {
+    console.error("Registration error:", error);
+    res.status(500).json({ message: "Error registering user", error });
+  }
+});
+
+// General Login Route
+router.post("/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    let user = await Student.findOne({ email }) ||
+               await Teacher.findOne({ email }) ||
+               await Admin.findOne({ email });
+
+    if (!user) {
+      return res.status(400).json({ message: "User not found" });
+    }
+
+    let isMatch = false;
+    if (user.password.startsWith('$2')) {
+      isMatch = await bcrypt.compare(password, user.password);
+    } else {
+      isMatch = password === user.password;
+    }
+
+    if (!isMatch) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
+
+    const jwtSecret = process.env.JWT_SECRET || "default_secret";
+    const token = jwt.sign({ id: user._id, role: user.role }, jwtSecret, { expiresIn: "1h" });
+
+    res.json({ message: "Login successful", token });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
+
+// Admin Registration
+router.post("/register-admin", async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+    const existingAdmin = await Admin.findOne({ email });
+    if (existingAdmin) {
+      return res.status(400).json({ message: "Admin already exists" });
+    }
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newAdmin = new Admin({ name, email, password: hashedPassword, role: "admin" });
+    await newAdmin.save();
+    res.status(201).json({ message: "Admin registered successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error registering admin", error });
+  }
+});
+
+// Admin Login
+router.post("/login-admin", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const admin = await Admin.findOne({ email });
+    if (!admin) {
+      return res.status(400).json({ message: "Admin not found" });
+    }
+
+    console.log("Stored Hashed Password:", admin.password);
+    console.log("Entered Password:", password);
+
+    let isMatch = false;
+    if (admin.password.startsWith('$2')) {
+      isMatch = await bcrypt.compare(password, admin.password);
+    } else {
+      isMatch = password === admin.password;
+    }
+
+    console.log("🔍 Password Match:", isMatch);
+
+    if (!isMatch) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
+
+    const jwtSecret = process.env.JWT_SECRET || "default_secret";
+    const token = jwt.sign({ id: admin._id, role: "admin" }, jwtSecret, { expiresIn: "1h" });
+
+    console.log("✅ Token Generated:", token);
+    res.json({ message: "Admin login successful", token, role: "admin" });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
+
+// Student Login
+router.post("/login-student", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const student = await Student.findOne({ email });
+    if (!student) {
+      return res.status(400).json({ message: "Student not found" });
+    }
+
+    console.log("Stored Hashed Password:", student.password);
+    console.log("Entered Password:", password);
+
+    let isMatch = false;
+    if (student.password.startsWith('$2')) {
+      isMatch = await bcrypt.compare(password, student.password);
+    } else {
+      isMatch = password === student.password;
+    }
+
+    console.log("🔍 Password Match:", isMatch);
+
+    if (!isMatch) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
+
+    const jwtSecret = process.env.JWT_SECRET || "default_secret";
+    const token = jwt.sign({ id: student._id, role: "student" }, jwtSecret, { expiresIn: "1h" });
+
+    console.log("✅ Token Generated:", token);
+    res.json({ message: "Student login successful", token, role: "student" });
+
+  } catch (error) {
+    console.error("Student Login Error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
+
+// Teacher Login
+router.post("/login-teacher", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const teacher = await Teacher.findOne({ email });
+    if (!teacher) {
+      return res.status(400).json({ message: "Teacher not found" });
+    }
+
+    console.log("Stored Hashed Password:", teacher.password);
+    console.log("Entered Password:", password);
+
+    let isMatch = false;
+    if (teacher.password.startsWith('$2')) {
+      isMatch = await bcrypt.compare(password, teacher.password);
+    } else {
+      isMatch = password === teacher.password;
+    }
+
+    console.log("🔍 Password Match:", isMatch);
+
+    if (!isMatch) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
+
+    const jwtSecret = process.env.JWT_SECRET || "default_secret";
+    const token = jwt.sign({ id: teacher._id, role: "teacher" }, jwtSecret, { expiresIn: "1h" });
+
+    console.log("✅ Token Generated:", token);
+    res.json({
+      message: "Teacher login successful",
+      token,
+      role: "teacher",
+      tid: teacher.tid,
+    });
+
+  } catch (error) {
+    console.error("Teacher Login Error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
+
+// JWT Auth Middleware
+const authMiddleware = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.split(' ')[1];
+
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'default_secret');
+      req.user = decoded;
+      next();
+    } catch (error) {
+      return res.status(401).json({ message: 'Invalid token' });
+    }
+  } else {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+};
+
+// Get Teacher Profile
+router.get('/profile', authMiddleware, async (req, res) => {
+  try {
+    const teacher = await Teacher.findById(req.user.id).select('-password');
+    if (!teacher) {
+      return res.status(404).json({ message: 'Teacher not found' });
+    }
+    res.json(teacher);
+  } catch (error) {
+    console.error('Error fetching teacher profile:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get Student Profile
+router.get('/studentprofile', authMiddleware, async (req, res) => {
+  try {
+    const student = await Student.findById(req.user.id).select('-password');
+    if (!student) {
+      return res.status(404).json({ message: 'Student not found' });
+    }
+    res.json(student);
+  } catch (error) {
+    console.error('Error fetching student profile:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+module.exports = router;
+*/
+
+
+
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
@@ -185,8 +461,8 @@ router.post("/login-student", async (req, res) => {
       return res.status(400).json({ message: "Student not found" });
     }
 
-    console.log("Stored Hashed Password:", student.password);
-    console.log("Entered Password:", password);
+    //console.log("Stored Hashed Password:", student.password);
+    //console.log("Entered Password:", password);
 
     // Compare entered password with hashed password
     const isMatch = await bcrypt.compare(password, student.password);
@@ -201,7 +477,10 @@ router.post("/login-student", async (req, res) => {
     const token = jwt.sign({ id: student._id, role: "student" }, jwtSecret, { expiresIn: "1h" });
 
     console.log("✅ Token Generated:", token);
-    res.json({ message: "Student login successful", token, role: "student" });
+    res.json({ message: "Student login successful", token,
+       role: "student",
+       name:student.name,
+       });
 
   } catch (error) {
     console.error("Student Login Error:", error);
@@ -300,6 +579,5 @@ router.get('/studentprofile', authMiddleware, async (req, res) => {
 });
 
 module.exports = router;
-
 
 

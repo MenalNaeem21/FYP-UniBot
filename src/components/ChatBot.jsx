@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { Moon, Sun } from "lucide-react";
+//const { user } = useContext(AuthContext);
 
 const shortForms = {
   ds: "data structures",
@@ -8,6 +9,15 @@ const shortForms = {
   ai: "artificial intelligence",
   pdc: "parallel distributed computing",
 };
+
+function expandShortForms(text) {
+  let expanded = text;
+  for (const short in shortForms) {
+    const regex = new RegExp(`\\b${short}\\b`, 'gi');
+    expanded = expanded.replace(regex, shortForms[short]);
+  }
+  return expanded;
+}
 const sendBotQuery = async (userMessage, user = null) => {
     try {
       const response = await fetch('/api/bot/ask', {
@@ -32,16 +42,9 @@ const sendBotQuery = async (userMessage, user = null) => {
     }
   };
   
-function expandShortForms(text) {
-  let expanded = text;
-  for (const short in shortForms) {
-    const regex = new RegExp(`\\b${short}\\b`, 'gi');
-    expanded = expanded.replace(regex, shortForms[short]);
-  }
-  return expanded;
-}
 
-const ChatBot = () => {
+
+const ChatBot = ({user}) => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([]);
   const [userInput, setUserInput] = useState("");
@@ -63,8 +66,11 @@ const ChatBot = () => {
   const toggleChat = () => {
     setIsOpen(!isOpen);
     if (!isOpen) {
-      setMessages([{ sender: "bot", text: "🤖 Hello! How may I help you today?" }]);
-      setConversationEnded(false); // Reset ended convo when reopening
+         const greeting = user?.role === "student"
+       ? `👋 Welcome back, ${user.name}! How may I help you today?`
+        : "🤖 Hello! How may I help you today?";
+      setMessages([{ sender: "bot", text: greeting }]);
+      setConversationEnded(false);
     }
   };
 
@@ -77,14 +83,15 @@ const ChatBot = () => {
 
     const expandedInput = expandShortForms(userInput.toLowerCase());
     const userMessage = { sender: "user", text: userInput };
-    setMessages((prev) => [...prev, userMessage]);
+        setMessages(prev => [...prev, { sender: "user", text: userInput }]);
+
 
     if (conversationEnded) {
       setUserInput("");
       return;
     }
 
-    if (awaitingEndDecision) {
+   /* if (awaitingEndDecision) {
       if (expandedInput.includes("yes")) {
         setMessages((prev) => [
           ...prev,
@@ -129,11 +136,50 @@ const ChatBot = () => {
       setUserInput("");
       return;
     }
+*/
+      // End confirmation logic
+    if (awaitingEndDecision || awaitingEndConfirmation) {
+      const yes = expandedInput.includes("yes");
+      const no = expandedInput.includes("no");
+
+      if (awaitingEndDecision) {
+        setMessages(prev => [...prev, {
+          sender: "bot",
+          text: yes
+            ? "👍 Thank you! Have a wonderful day! 🌟"
+            : no
+            ? "😊 Alright! What else can I help you with?"
+            : "❓ Please type 'yes' or 'no'."
+        }]);
+        setConversationEnded(yes);
+        setAwaitingEndDecision(false);
+      } else if (awaitingEndConfirmation) {
+        setMessages(prev => [...prev, {
+          sender: "bot",
+          text: yes
+            ? "🧠 Would you like to end the conversation? (yes/no)"
+            : no
+            ? "🤖 No worries! Tell me what you need help with."
+            : "❓ Please type 'yes' or 'no'."
+        }]);
+        setAwaitingEndDecision(yes);
+        setAwaitingEndConfirmation(false);
+      }
+
+      setUserInput("");
+      return;
+    }
+
+    
+
+
+
 
     try {
       setIsTyping(true);
-      const response = await axios.post("http://localhost:5000/api/bot/ask", { userMessage: expandedInput });
-      const botReply = response.data.response || "Sorry, I couldn't find an answer.";
+      //const response = await axios.post("http://localhost:5000/api/bot/ask", { message: expandedInput });
+      //const botReply = response.data.reply || "Sorry, I couldn't find an answer.";
+             const botReply = await sendBotQuery(expandedInput, user);
 
       setTimeout(() => {
         setMessages((prev) => [

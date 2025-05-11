@@ -1,10 +1,9 @@
-const { askOpenAI, fetchAcademicInfo } = require("./openaiService");
+const { askOpenAI, fetchAcademicInfo } = require("./openaiService"); 
 const {
   queryTimetable,
   findProfessorCourses,
   getStudentById,
 } = require("./mongoService");
-const { checkRateLimit } = require("./rateLimit");
 
 const courseShortForms = {
   ds: "Data Structures",
@@ -61,7 +60,7 @@ async function askBot(userMessage, user = null) {
     ) {
       const courseName = extractCourse(userMessage);
       if (!courseName) return "📚 Please mention a course to get its timetable.";
-
+      
       const entries = await queryTimetable(courseName);
       if (!entries.length) return `🚫 No timetable found for "${courseName}".`;
 
@@ -76,24 +75,17 @@ async function askBot(userMessage, user = null) {
         return `📍 Class location(s) for ${courseName}:\n${uniqueLocations.join("\n")}`;
       }
 
-      const formatted = entries.map(entry => {
-        return `
-      
-      📘 *${entry["Course Name"]}* (${entry.Section})
-      🗓️ *Day:* ${entry.Day}
-      🕒 *Time:* ${entry.Time}
-      🏫 *Room:* ${entry.Room}
-      👨‍🏫 *Instructor:* ${entry.Instructor}
-      
-      `;
-      }).join("\n");
-      
-      return formatted;
-      
+      return entries.map(entry => `
+📘 *${entry["Course Name"]}* (${entry.Section})
+🗓️ *Day:* ${entry.Day}
+🕒 *Time:* ${entry.Time}
+🏫 *Room:* ${entry.Room}
+👨‍🏫 *Instructor:* ${entry.Instructor}
+━━━━━━━━━━━━`).join("\n");
     }
 
     // 👨‍🏫 Professor Course Queries
-    const profMatch = userMessage.match(/(?:prof\.?|dr\.?|mr\.?|ms\.?|mrs\.?)?\s*([\w\s]+)\s+(?:teaches|teaching|teaches.*course|course taught by)/i);
+    const profMatch = userMessage.match(/(?:prof\.?|dr\.?|mr\.?|ms\.?|mrs\.?)?\s*([\w\s]+)\s+(?:teaches|teaching|teaches.*course|course taught by|teaching which course)/i);
     if (profMatch) {
       const name = profMatch[1]?.trim();
       if (name) {
@@ -134,7 +126,7 @@ async function askBot(userMessage, user = null) {
         return `✅ Registered courses: ${student.registeredCourses.join(", ")}`;
     }
 
-    // ℹ️ Static Text Match
+    // ℹ️ Static Info Matching
     const info = fetchAcademicInfo(userMessage);
     if (info) return info;
 

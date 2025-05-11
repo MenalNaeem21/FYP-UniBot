@@ -19,9 +19,11 @@ const LoginPage = ({ setAuthenticated }) => {
         email: values.username, // still using 'username' field but sending it as email
         password: values.password
       });
-
+  
       if (response.data.token) {
         localStorage.setItem("studentToken", response.data.token); // Store token
+        localStorage.setItem("role", response.data.role); // ✅ Store role
+        localStorage.setItem("name", response.data.name); // ✅ Store name
         setAuthenticated(true);
         message.success("Login successful!");
         navigate("/home"); // Redirect to home
@@ -34,6 +36,7 @@ const LoginPage = ({ setAuthenticated }) => {
     }
     setLoading(false);
   };
+  
 
   const onFinishFailed = (errorInfo) => {
     console.log("Failed:", errorInfo);
