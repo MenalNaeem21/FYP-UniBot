@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Timetable = require('../models/Timetable');
-
+const ExcelJS = require('exceljs');
 // Get timetable based on course code or faculty
 router.get('/timetable', async (req, res) => {
     try {
@@ -18,4 +18,83 @@ router.get('/timetable', async (req, res) => {
     }
 });
 
+
+// Add to routes/timetable.js
+router.get('/course-options', async (req, res) => {
+    try {
+      const options = await Timetable.aggregate([
+        {
+          $group: {
+            _id: { courseName: "$Course Name", section: "$Section" }
+          }
+        },
+        {
+          $project: {
+            _id: 0,
+            courseName: "$_id.courseName",
+            section: "$_id.section"
+          }
+        }
+      ]);
+      res.json(options);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: "Failed to fetch options" });
+    }
+  });
+  
+
+router.post('/student-view', async (req, res) => {
+  try {
+    const { selectedCourses } = req.body; // array of { courseName, section }
+    if (!selectedCourses || selectedCourses.length === 0) {
+      return res.status(400).json({ error: 'No courses selected.' });
+    }
+
+    const query = selectedCourses.map(c => ({
+      'Course Name': c.courseName,
+      Section: c.section
+    }));
+
+    const timetableData = await Timetable.find({ $or: query });
+
+    res.status(200).json({ timetable: timetableData });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+router.post('/student-view/export', async (req, res) => {
+  try {
+    const { timetable } = req.body;
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet('Student Timetable');
+
+    sheet.columns = [
+      { header: 'Course Name', key: 'Course Name', width: 25 },
+      { header: 'Section', key: 'Section', width: 15 },
+      { header: 'Day', key: 'Day', width: 15 },
+      { header: 'Time', key: 'Time', width: 20 },
+      { header: 'Room', key: 'Room', width: 15 },
+      { header: 'Instructor', key: 'Instructor', width: 25 },
+      { header: 'Sheet', key: 'Sheet', width: 25 }
+    ];
+
+    timetable.forEach(entry => {
+      sheet.addRow(entry);
+    });
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename=StudentTimetable.xlsx');
+
+    await workbook.xlsx.write(res);
+    res.end();
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to export timetable' });
+  }
+});
+
 module.exports = router;
+

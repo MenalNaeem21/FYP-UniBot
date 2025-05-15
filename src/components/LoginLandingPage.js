@@ -32,7 +32,7 @@ const LoginLandingPage = () => {
           I'm a student
         </Button>
         <Button type="primary" icon={<SmileOutlined />} size="large" onClick={handleTeacherLogin} className="login-button">
-          I'm a Professor!
+          I'm a Teacher!
         </Button>
       </div>
     </div>

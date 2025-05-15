@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Button, Modal, Form, Input, Select, message } from 'antd';
+import { Table, Button, Modal, Form, Input, Select,Typography, message } from 'antd';
 import { EditOutlined, DeleteOutlined, EyeOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import './Aregistration.css';
 
 const { Option } = Select;
-
+const { Title, Text } = Typography;
 const Aregistration = () => {
   const [courses, setCourses] = useState([]);
   const [teachers, setTeachers] = useState([]);
@@ -134,10 +134,10 @@ const Aregistration = () => {
   ];
 
   return (
-    <div className="admin-courses-container">
+    <div className="course-management-container">
       <header className="welcome-header">
-        <h2>📚 Course Management</h2>
-        <p>Add and manage courses efficiently.</p>
+        <Title level={2} className="welcome-title">📚 Course Management</Title>
+        <Text type="secondary">Add and manage courses efficiently.</Text>
       </header>
 
       <header className="admin-header">
@@ -147,7 +147,7 @@ const Aregistration = () => {
           onChange={(e) => setSearchQuery(e.target.value)}
           className="search-bar"
         />
-        <div className="marks-buttons">
+          <div className="marks-buttons">
           <Button type="primary" icon={<PlusOutlined />} onClick={() => {
             setEditingCourse(null);
             form.resetFields();
@@ -155,8 +155,9 @@ const Aregistration = () => {
           }}>
             Add New Course
           </Button>
-        </div>
+          </div>
       </header>
+    
 
       <Table
         columns={columns}

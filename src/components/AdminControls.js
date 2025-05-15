@@ -48,63 +48,66 @@ const AdminControls = () => {
 
   return (
     <div className="controls-container">
-      {/* Registration Control Card */}
-      <Card
-        title={<Title level={3}><SettingOutlined /> Student Registration Controls</Title>}
-        bordered
-        style={{ maxWidth: 600, margin: 'auto', marginTop: 40 }}
-      >
-        <Space direction="vertical" size="large" style={{ width: '100%' }}>
-          <Space size="large">
-            <Text strong>Enable Registration:</Text>
-            <Switch
-              checked={registrationOpen}
-              onChange={checked => setRegistrationOpen(checked)}
-            />
-          </Space>
+      <header className="welcome-header">
+        <Title level={2} className="welcome-title">⚙️ Admin Control Panel</Title>
+        <Text type="secondary">Manage registration and grading settings here.</Text>
+      </header>
 
-          {registrationOpen && (
-            <Space size="large">
-              <Text strong>Select Semester:</Text>
-              <Select
-                value={semester}
-                onChange={(value) => setSemester(value)}
-                style={{ width: 150 }}
-              >
-                <Option value="Fall">Fall</Option>
-                <Option value="Spring">Spring</Option>
-                <Option value="Summer">Summer</Option>
-              </Select>
+      <div className="admin-controls-grid">
+        <Card
+          className="animated-card"
+          title={<Title level={4}><SettingOutlined /> Student Registration</Title>}
+          bordered={false}
+        >
+          <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+            <Space>
+              <Text strong>Enable Registration:</Text>
+              <Switch
+                checked={registrationOpen}
+                onChange={checked => setRegistrationOpen(checked)}
+              />
             </Space>
-          )}
-        </Space>
-      </Card>
 
-      {/* Grader Control Card */}
-      <Card
-        title={<Title level={3}><EditOutlined /> Teacher Grader Controls</Title>}
-        bordered
-        style={{ maxWidth: 600, margin: 'auto', marginTop: 20 }}
-      >
-        <Space direction="vertical" size="large" style={{ width: '100%' }}>
-          <Space size="large">
-            <Text strong>Enable Teacher Grading:</Text>
-            <Switch
-              checked={graderOpen}
-              onChange={checked => setGraderOpen(checked)}
-            />
+            {registrationOpen && (
+              <Space>
+                <Text strong>Select Semester:</Text>
+                <Select
+                  value={semester}
+                  onChange={(value) => setSemester(value)}
+                  style={{ width: 150 }}
+                >
+                  <Option value="Fall">Fall</Option>
+                  <Option value="Spring">Spring</Option>
+                  <Option value="Summer">Summer</Option>
+                </Select>
+              </Space>
+            )}
           </Space>
-        </Space>
-      </Card>
+        </Card>
 
-      {/* Save Button */}
-      <div style={{ textAlign: 'center', marginTop: 30 }}>
+        <Card
+          className="animated-card"
+          title={<Title level={4}><EditOutlined /> Teacher Grading</Title>}
+          bordered={false}
+        >
+          <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+            <Space>
+              <Text strong>Enable Teacher Grading:</Text>
+              <Switch
+                checked={graderOpen}
+                onChange={checked => setGraderOpen(checked)}
+              />
+            </Space>
+          </Space>
+        </Card>
+      </div>
+
+      <div className="marks-buttons">
         <Button
           type="primary"
           onClick={updateControls}
           loading={loading}
           size="large"
-          style={{ width: 200 }}
         >
           Save All Changes
         </Button>
