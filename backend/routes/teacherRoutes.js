@@ -107,6 +107,51 @@ router.get('/teachers/:tid/courses', async (req, res) => {
     res.status(500).json({ message: 'Server error while fetching courses' });
   }
 });
+router.get('/teacher/dashboard/:tid', async (req, res) => {
+  const { tid } = req.params;
+
+  try {
+    const courses = await Course.find({ 'instructor.id': tid });
+    const totalCourses = courses.length;
+
+    let totalStudents = 0, pendingTasks = 0, completedTasks = 0, attendanceTotal = 0, attendanceCount = 0;
+    let recentClasses = [];
+
+    for (let course of courses) {
+      const students = await Student.find({ registeredCourses: { $elemMatch: { id: course.id, section: course.sections } } });
+      totalStudents += students.length;
+
+      const classworks = await Classwork.find({ courseId: course.id, courseSection: course.sections });
+      pendingTasks += classworks.filter(cw => cw.submissions.length === 0).length;
+      completedTasks += classworks.filter(cw => cw.submissions.length > 0).length;
+
+      const attendanceRecords = await Attendance.find({ courseId: course.id, section: course.sections });
+      attendanceRecords.forEach(record => {
+        const presentCount = record.students.filter(s => s.status === 'P').length;
+        const percentage = (presentCount / record.students.length) * 100;
+        attendanceTotal += percentage;
+        attendanceCount++;
+        recentClasses.push({ course: course.name, date: record.date });
+      });
+    }
+
+    const avgAttendance = attendanceCount > 0 ? (attendanceTotal / attendanceCount).toFixed(2) + '%' : '0%';
+    const gradeRequests = await GradeChangeRequest.countDocuments({ 'instructor.id': tid, status: 'pending' });
+
+    res.json({
+      totalCourses,
+      totalStudents,
+      pendingTasks,
+      completedTasks,
+      avgAttendance,
+      gradeRequests,
+      recentClasses: recentClasses.slice(0, 3),
+    });
+  } catch (err) {
+    console.error('Dashboard error:', err);
+    res.status(500).json({ message: 'Failed to load dashboard data' });
+  }
+});
 
 
 

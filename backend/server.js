@@ -13,7 +13,7 @@ const authRoutes = require("./routes/authRoutes");
 const adminRoutes = require("./routes/adminRoutes"); 
 const timetableRoutes = require('./routes/timetableRoutes');
 const controlsRoutes = require('./routes/controls');
-
+const statsRoutes = require('./routes/stats');
 
 const path = require('path');
 dotenv.config();
@@ -68,6 +68,7 @@ app.use("/api/courses", courseRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/timetable", timetableRoutes);
+app.use('/api/stats', statsRoutes);
 
 // 🔹 Bot Route: To interact with the bot
 app.post("/api/bot/ask", async (req, res) => {

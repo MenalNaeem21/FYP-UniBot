@@ -102,3 +102,37 @@
   background-color: #3b82f6;
   transform: scale(1.1);
 }
+.profile-info-card{
+  margin-bottom: 15px;
+  margin-top: 15px;
+}
+.profile-info-card .info-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.profile-info-card .info-icon {
+  font-size: 24px;
+  color: #1890ff;
+}
+
+.profile-info-card .info-label {
+  font-weight: 500;
+  color: #555;
+}
+
+.courses-card .course-tile {
+  border: 1px solid #f0f0f0;
+  background-color: #fafafa;
+  border-radius: 8px;
+  transition: box-shadow 0.3s ease;
+}
+
+.courses-card .course-tile:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.course-title {
+  margin-bottom: 8px;
+}
